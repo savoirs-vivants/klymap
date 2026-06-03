@@ -194,6 +194,52 @@ html, body {
     height: 100%;
 }
 
+.btn-geolocate {
+    position: absolute;
+    bottom: 24px;
+    left: 16px;
+    z-index: 1000;
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-aside-bg);
+    border: 2px solid var(--color-accent);
+    border-radius: 50%;
+    color: var(--color-accent);
+    cursor: pointer;
+    box-shadow: var(--shadow-md);
+    transition: background 0.2s, color 0.2s, transform 0.15s;
+}
+
+.btn-geolocate svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+.btn-geolocate:hover {
+    background: var(--color-accent);
+    color: var(--color-primary);
+    transform: scale(1.08);
+}
+
+.btn-geolocate.is-active {
+    background: var(--color-accent);
+    color: var(--color-primary);
+}
+
+.btn-geolocate.is-loading {
+    animation: pulse-geo 1s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes pulse-geo {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.6; transform: scale(0.92); }
+}
+
 /* ── Responsive — tablette ── */
 
 @media (max-width: 1024px) {

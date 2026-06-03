@@ -1,1 +1,1 @@
-//
+import './map.js';
