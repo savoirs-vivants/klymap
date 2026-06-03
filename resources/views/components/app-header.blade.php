@@ -7,11 +7,16 @@
     </div>
 
     <div class="flex items-center gap-4">
-        <button class="flex items-center gap-1.5 px-4 py-2 rounded-full border border-blue/25 text-blue text-sm font-medium hover:border-blue/60 hover:bg-blue/5 transition-all duration-200">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                    </svg>
-                    J'ai un code
+        @auth
+            <button class="flex items-center gap-1.5 px-4 py-2 rounded-full bg-teal-50 border border-teal-200 text-teal-700 text-sm font-medium hover:bg-teal-100 hover:border-teal-300 transition-all duration-200">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                Lancer une campagne
+            </button>
+        @endauth
+
+        <button class="flex items-center gap-1.5 px-4 py-2 rounded-full border border-slate-200 text-slate-600 text-sm font-medium hover:border-slate-300 hover:bg-slate-50 transition-all duration-200">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+            J'ai un code
         </button>
 
         @auth
@@ -19,7 +24,7 @@
                 <button
                     id="user-menu-btn"
                     type="button"
-                    class="w-9 h-9 rounded-full bg-teal-400 flex items-center justify-center text-teal-900 text-sm font-bold tracking-wide hover:bg-teal-300 transition-colors shadow focus:outline-none focus:ring-2 focus:ring-teal-300 focus:ring-offset-2 focus:ring-offset-teal-700"
+                    class="w-9 h-9 rounded-full bg-teal-500 flex items-center justify-center text-white text-sm font-bold tracking-wide hover:bg-teal-400 transition-colors shadow focus:outline-none focus:ring-2 focus:ring-teal-300 focus:ring-offset-2"
                     aria-haspopup="true"
                     aria-expanded="false"
                 >
@@ -50,7 +55,7 @@
                 </div>
             </div>
         @else
-            <a href="{{ route('login') }}" class="flex items-center gap-2 px-4 py-2 bg-teal-400 hover:bg-teal-300 text-teal-900 text-sm font-semibold rounded-lg transition-all shadow hover:shadow-md active:scale-95">
+            <a href="{{ route('login') }}" class="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white text-sm font-semibold rounded-lg transition-all shadow hover:shadow-md active:scale-95">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                 Mon compte
             </a>
