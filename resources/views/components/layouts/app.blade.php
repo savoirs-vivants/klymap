@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ $title ?? 'Klymap' }}</title>
+
+    @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @endif
+</head>
+<body class="min-h-screen bg-slate-50 antialiased flex flex-col">
+
+    <x-app-header />
+
+    <div class="flex flex-1 overflow-hidden">
+        <x-map-aside />
+
+        <main class="flex-1 overflow-y-auto p-6 lg:p-8">
+            <div class="max-w-6xl mx-auto">
+                {{ $slot }}
+            </div>
+        </main>
+    </div>
+
+</body>
+</html>
