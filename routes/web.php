@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\BackofficeController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\ResetPasswordController;
@@ -23,5 +24,13 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
+    Route::get('/dashboard', fn () => view('welcome'))->name('dashboard');
     Route::post('/deconnexion', [LoginController::class, 'destroy'])->name('logout');
+});
+
+Route::middleware(['auth', 'admin'])->prefix('backoffice')->name('backoffice.')->group(function () {
+    Route::get('/utilisateurs', [BackofficeController::class, 'index'])->name('users');
+    Route::post('/utilisateurs', [BackofficeController::class, 'store'])->name('users.store');
+    Route::put('/utilisateurs/{user}', [BackofficeController::class, 'update'])->name('users.update');
+    Route::delete('/utilisateurs/{user}', [BackofficeController::class, 'destroy'])->name('users.destroy');
 });
