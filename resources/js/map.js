@@ -1,12 +1,11 @@
 document.addEventListener('DOMContentLoaded', () => {
     const map = window.L.map('map', {
-        center: [49.182, -0.370],
+        center: [48.5853, 7.7512],
         zoom: 15,
         zoomControl: true,
     });
 
     window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
         maxZoom: 19,
     }).addTo(map);
 
