@@ -1,9 +1,248 @@
 @import 'tailwindcss';
+@import '@fontsource/space-grotesk/400.css';
+@import '@fontsource/space-grotesk/500.css';
+@import '@fontsource/space-grotesk/700.css';
+@import '@fontsource/space-mono/400.css';
+@import '@fontsource/space-mono/700.css';
 
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
+:root {
+    --header-height: 60px;
+    --aside-width: 220px;
+    --color-primary: #0f3460;
+    --color-accent: #16c79a;
+    --color-header-bg: #0f3460;
+    --color-aside-bg: #0d2847;
+    --color-surface: #ffffff;
+    --color-border: rgba(255, 255, 255, 0.1);
+    --color-text: #1a202c;
+    --color-text-muted: #94b8d8;
+    --color-btn-code-bg: rgba(255, 255, 255, 0.12);
+    --color-btn-code-hover: rgba(255, 255, 255, 0.2);
+    --radius: 8px;
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
 
-@theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    height: 100%;
+    font-family: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+    font-size: 14px;
+    color: var(--color-text);
+    background: var(--color-surface);
+}
+
+.app-body {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* ── Header ── */
+
+.app-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: var(--header-height);
+    padding: 0 20px;
+    background: var(--color-header-bg);
+    border-bottom: 1px solid var(--color-border);
+    box-shadow: var(--shadow-md);
+    flex-shrink: 0;
+    z-index: 100;
+}
+
+.header-brand {
+    display: flex;
+    align-items: center;
+}
+
+.header-logo {
+    font-family: 'Space Mono', ui-monospace, monospace;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--color-accent);
+    letter-spacing: -0.5px;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.btn-code {
+    padding: 7px 14px;
+    background: var(--color-btn-code-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-weight: 500;
+    color: #ffffff;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.btn-code:hover {
+    background: var(--color-btn-code-hover);
+}
+
+.btn-account {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    background: var(--color-accent);
+    border: none;
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-weight: 600;
+    color: #0f3460;
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+
+.btn-account:hover {
+    opacity: 0.88;
+}
+
+.btn-account svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+/* ── Layout ── */
+
+.app-layout {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* ── Aside ── */
+
+.map-aside {
+    width: var(--aside-width);
+    background: var(--color-aside-bg);
+    border-right: 1px solid var(--color-border);
+    box-shadow: var(--shadow-md);
+    overflow-y: auto;
+    flex-shrink: 0;
+    z-index: 50;
+}
+
+.aside-inner {
+    padding: 20px 16px;
+}
+
+.aside-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-text-muted);
+    margin-bottom: 14px;
+}
+
+.legend-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    list-style: none;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.legend-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+.legend-label {
+    font-family: 'Space Mono', ui-monospace, monospace;
+    font-size: 12px;
+    color: #e2eaf4;
+}
+
+/* ── Main / Map ── */
+
+.app-main {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+}
+
+#map {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/* ── Responsive — tablette ── */
+
+@media (max-width: 1024px) {
+    :root {
+        --aside-width: 180px;
+    }
+
+    .btn-account span {
+        display: none;
+    }
+}
+
+/* ── Responsive — mobile ── */
+
+@media (max-width: 640px) {
+    .app-body {
+        overflow: visible;
+    }
+
+    .app-layout {
+        flex-direction: column;
+        overflow: visible;
+        height: auto;
+    }
+
+    .map-aside {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--color-border);
+    }
+
+    .aside-inner {
+        padding: 14px 16px;
+    }
+
+    .legend-list {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 8px 16px;
+    }
+
+    .app-main {
+        flex: none;
+        height: 60vh;
+        position: relative;
+    }
+
+    #map {
+        position: absolute;
+        inset: 0;
+    }
 }
