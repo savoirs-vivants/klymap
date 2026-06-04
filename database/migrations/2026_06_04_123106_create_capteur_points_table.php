@@ -8,23 +8,21 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('points', function (Blueprint $table) {
+        Schema::create('capteur_points', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('capteur_temoin_id')->constrained()->cascadeOnDelete();
             $table->string('name');
-            $table->decimal('lat', 10, 8);
-            $table->decimal('lng', 11, 8);
-            $table->float('icu')->nullable();
-
-            $table->foreignId('temoin_id')->nullable()->constrained('points')->nullOnDelete();
-
+            $table->decimal('lat', 10, 7);
+            $table->decimal('lng', 10, 7);
+            $table->decimal('icu_value', 6, 3)->nullable();
+            $table->decimal('std_dev', 6, 3)->nullable();
             $table->timestamps();
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('points');
+        Schema::dropIfExists('capteur_points');
     }
-
 };
