@@ -10,9 +10,10 @@ return new class extends Migration
     {
         Schema::create('points', function (Blueprint $table) {
             $table->id();
-            $table->string('nom');
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->string('name');
             $table->decimal('lat', 10, 8);
-            $table->decimal('long', 11, 8);
+            $table->decimal('lng', 11, 8);
             $table->float('icu')->nullable();
 
             $table->foreignId('temoin_id')->nullable()->constrained('points')->nullOnDelete();
