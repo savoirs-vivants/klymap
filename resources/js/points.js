@@ -69,6 +69,8 @@ window.openPointModal = function (point = null) {
     const modal = document.getElementById('modal-point');
     if (!modal) return;
 
+    const isAuth = document.body.dataset.auth === '1';
+
     document.getElementById('point-name').value       = point?.name ?? '';
     document.getElementById('point-file-input').value = '';
     document.getElementById('modal-point-title').textContent = point ? 'Détail du point de mesure' : 'Nouveau point de mesure';
@@ -77,13 +79,35 @@ window.openPointModal = function (point = null) {
         document.getElementById(id)?.classList.add('hidden');
     });
 
-    const deleteBtn = document.getElementById('point-delete-btn');
-    deleteBtn.classList.toggle('hidden', !point);
-    deleteBtn.classList.toggle('flex', !!point);
+    const deleteBtn    = document.getElementById('point-delete-btn');
+    const saveBtn      = document.getElementById('point-save-btn');
+    const nameInput    = document.getElementById('point-name');
+    const temoinSelect = document.getElementById('point-temoin-select');
+    const fileSection  = document.getElementById('point-file-label')?.parentElement;
+    const recalcBtn    = document.getElementById('btn-recalculate');
 
-    const saveBtn = document.getElementById('point-save-btn');
-    saveBtn.disabled = !point;
-    saveBtn.textContent = point ? 'Mettre à jour' : 'Valider';
+    if (!isAuth) {
+        if (deleteBtn) deleteBtn.classList.replace('flex', 'hidden');
+        if (saveBtn) saveBtn.classList.add('hidden');
+        if (nameInput) nameInput.disabled = true;
+        if (temoinSelect) temoinSelect.disabled = true;
+        if (fileSection) fileSection.classList.add('hidden');
+        if (recalcBtn) recalcBtn.classList.add('hidden');
+    } else {
+        if (deleteBtn) {
+            deleteBtn.classList.toggle('hidden', !point);
+            deleteBtn.classList.toggle('flex', !!point);
+        }
+        if (saveBtn) {
+            saveBtn.classList.remove('hidden');
+            saveBtn.disabled = !point;
+            saveBtn.textContent = point ? 'Mettre à jour' : 'Valider';
+        }
+        if (nameInput) nameInput.disabled = false;
+        if (temoinSelect) temoinSelect.disabled = false;
+        if (fileSection) fileSection.classList.remove('hidden');
+        if (recalcBtn) recalcBtn.classList.remove('hidden');
+    }
 
     modal.classList.remove('hidden');
     modal.classList.add('flex');
@@ -824,11 +848,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
 document.addEventListener('klymap:ready', () => {
     if (!window._klymapInstance) return;
-    if (document.body.dataset.auth !== '1') return;
-
+    const isAuth = document.body.dataset.auth === '1';
     window._klymapInstance.on('click', (e) => {
         if (window._placementMode) return;
-        onMapClickPoint(e.latlng);
+
+        if (isAuth) {
+            onMapClickPoint(e.latlng);
+        }
     });
 
     fetch('/api/capteur-points')

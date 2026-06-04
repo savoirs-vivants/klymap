@@ -33,21 +33,25 @@ Route::middleware('guest')->group(function () {
     Route::post('/session/quitter',   [ParticipantController::class, 'logout'])->name('participant.logout');
 });
 
+Route::prefix('api')->name('api.')->group(function () {
+    Route::get('/capteur-temoins', [CapteurTemoinController::class, 'index'])->name('temoins.index');
+    Route::get('/capteur-temoins/{capteurTemoin}/export', [CapteurTemoinController::class, 'export'])->name('temoins.export');
+    Route::get('/capteur-temoins/{capteurTemoin}/mesures', [CapteurTemoinController::class, 'show'])->name('temoins.show');
+
+    Route::get('/capteur-points', [CapteurPointController::class, 'index'])->name('points.index');
+    Route::get('/capteur-points/{capteurPoint}', [CapteurPointController::class, 'show'])->name('points.show');
+});
+
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', fn() => view('welcome'))->name('dashboard');
     Route::post('/deconnexion', [LoginController::class, 'destroy'])->name('logout');
 
     Route::prefix('api')->name('api.')->group(function () {
-        Route::get('/capteur-temoins', [CapteurTemoinController::class, 'index'])->name('temoins.index');
         Route::post('/capteur-temoins', [CapteurTemoinController::class, 'store'])->name('temoins.store');
         Route::put('/capteur-temoins/{capteurTemoin}', [CapteurTemoinController::class, 'update'])->name('temoins.update');
         Route::delete('/capteur-temoins/{capteurTemoin}', [CapteurTemoinController::class, 'destroy'])->name('temoins.destroy');
-        Route::get('/capteur-temoins/{capteurTemoin}/export', [CapteurTemoinController::class, 'export'])->name('temoins.export');
-        Route::get('/capteur-temoins/{capteurTemoin}/mesures', [CapteurTemoinController::class, 'show'])->name('temoins.show');
 
-        Route::get('/capteur-points', [CapteurPointController::class, 'index'])->name('points.index');
         Route::post('/capteur-points', [CapteurPointController::class, 'store'])->name('points.store');
-        Route::get('/capteur-points/{capteurPoint}', [CapteurPointController::class, 'show'])->name('points.show');
         Route::put('/capteur-points/{capteurPoint}', [CapteurPointController::class, 'update'])->name('points.update');
         Route::delete('/capteur-points/{capteurPoint}', [CapteurPointController::class, 'destroy'])->name('points.destroy');
     });
