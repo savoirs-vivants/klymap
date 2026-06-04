@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\BackofficeController;
+use App\Http\Controllers\CapteurPointController;
 use App\Http\Controllers\CapteurTemoinController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
@@ -42,6 +43,13 @@ Route::middleware('auth')->group(function () {
         Route::put('/capteur-temoins/{capteurTemoin}', [CapteurTemoinController::class, 'update'])->name('temoins.update');
         Route::delete('/capteur-temoins/{capteurTemoin}', [CapteurTemoinController::class, 'destroy'])->name('temoins.destroy');
         Route::get('/capteur-temoins/{capteurTemoin}/export', [CapteurTemoinController::class, 'export'])->name('temoins.export');
+        Route::get('/capteur-temoins/{capteurTemoin}/mesures', [CapteurTemoinController::class, 'show'])->name('temoins.show');
+
+        Route::get('/capteur-points', [CapteurPointController::class, 'index'])->name('points.index');
+        Route::post('/capteur-points', [CapteurPointController::class, 'store'])->name('points.store');
+        Route::get('/capteur-points/{capteurPoint}', [CapteurPointController::class, 'show'])->name('points.show');
+        Route::put('/capteur-points/{capteurPoint}', [CapteurPointController::class, 'update'])->name('points.update');
+        Route::delete('/capteur-points/{capteurPoint}', [CapteurPointController::class, 'destroy'])->name('points.destroy');
     });
 
     Route::get('/campagnes',                      [CampagneController::class, 'index'])->name('campagnes.index');
