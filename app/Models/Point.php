@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Point extends Model
 {
-    protected $fillable = ['nom', 'lat', 'long', 'icu', 'temoin_id'];
+    protected $fillable = ['user_id','name', 'lat', 'lng', 'icu', 'temoin_id'];
 
 
 }
