@@ -228,13 +228,17 @@ function addTemoinMarker(t) {
     if (!window._klymapInstance) return;
     const icon = window.L.divIcon({
         className: '',
-        html:      '<div class="marker-temoin"></div>',
-        iconSize:  [16, 16],
-        iconAnchor:[8, 8],
+        html: '<div style="width:24px; height:24px; border-radius:50%; background:#0f172a; border:3px solid #fff; box-shadow:0 4px 12px rgba(0,0,0,0.4);"></div>',
+        iconSize:  [24, 24],
+        iconAnchor:[12, 12],
     });
+
     const marker = window.L.marker([t.lat, t.lng], { icon })
         .addTo(window._klymapInstance)
         .bindPopup(popupContent(t));
+    marker.pointData = t;
+    marker.isTemoin = true;
+
     temoinsMarkers[t.id] = marker;
 }
 

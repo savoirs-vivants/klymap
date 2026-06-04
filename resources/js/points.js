@@ -711,26 +711,25 @@ window.deletePoint = async function (id) {
 /* ══════════════════ Map markers ══════════════════ */
 function buildPointIcon(p) {
     const color = icuColor(p.icu_value);
-
-    const needsVerification = p.std_dev !== null && p.std_dev > 0.5;
-
+    const isAuth = document.body.dataset.auth === '1';
+    const needsVerification = isAuth && p.std_dev !== null && p.std_dev > 0.5;
     let badge = '';
     if (needsVerification) {
         badge = `
-            <div style="position:absolute; top:-4px; right:-4px; width:10px; height:10px; background:#ef4444; border:2px solid #fff; border-radius:50%; box-shadow:0 1px 3px rgba(0,0,0,0.3); z-index:10;"></div>
+            <div style="position:absolute; top:-2px; right:-2px; width:12px; height:12px; background:#ef4444; border:2px solid #fff; border-radius:50%; box-shadow:0 2px 4px rgba(0,0,0,0.4); z-index:10;"></div>
         `;
     }
 
     return window.L.divIcon({
         className: '',
         html: `
-            <div style="position:relative; width:18px; height:18px;">
-                <div style="width:100%; height:100%; border-radius:50%; background:${color}; border:3px solid #fff; box-shadow:0 2px 6px rgba(0,0,0,0.35);"></div>
+            <div style="position:relative; width:28px; height:28px;">
+                <div style="width:100%; height:100%; border-radius:50%; background:${color}; border:4px solid #fff; box-shadow:0 4px 12px rgba(0,0,0,0.4);"></div>
                 ${badge}
             </div>
         `,
-        iconSize:   [18, 18],
-        iconAnchor: [9, 9],
+        iconSize:   [28, 28],
+        iconAnchor: [14, 14],
     });
 }
 
@@ -738,9 +737,9 @@ function pointPopupContent(p) {
     const color = icuColor(p.icu_value);
     const icu   = p.icu_value !== null ? `${p.icu_value} °C` : '—';
     const data  = JSON.stringify(p).replace(/"/g, '&quot;');
-
+    const isAuth = document.body.dataset.auth === '1';
     let warningHtml = '';
-    if (p.std_dev !== null && p.std_dev > 0.5) {
+    if (isAuth && p.std_dev !== null && p.std_dev > 0.5) {
         warningHtml = `
             <p style="font-size:10px; font-weight:600; color:#ef4444; margin:0 0 8px; display:flex; align-items:start; gap:4px; line-height:1.2;">
                 <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="flex-shrink:0; margin-top:1px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
