@@ -117,7 +117,7 @@
                     </div>
 
                     <div class="space-y-1">
-                        <a href="#"
+                        <a href="{{ route('profil.edit') }}"
                             class="flex items-center gap-3 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold text-gray-500 hover:bg-gray-50 hover:text-[#0F143A] transition-colors no-underline">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

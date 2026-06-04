@@ -8,6 +8,7 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\CampagneController;
 use App\Http\Controllers\ParticipantController;
+use App\Http\Controllers\ProfilController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn() => view('welcome'))->name('home');
@@ -49,6 +50,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/campagnes/{campagne}/participants', [CampagneController::class, 'participants'])->name('campagne.participants');
     Route::put('/campagnes/{campagne}/terminer', [CampagneController::class, 'terminer'])->name('campagnes.terminer');
     Route::delete('/campagnes/{campagne}',        [CampagneController::class, 'destroy'])->name('campagne.destroy');
+
+    Route::get('/profil',                   [ProfilController::class, 'profil'])->name('profil');
+    Route::get('/profil/modifier',          [ProfilController::class, 'edit'])->name('profil.edit');
+    Route::put('/profil/modifier',          [ProfilController::class, 'update'])->name('profil.update');
+    Route::put('/profil/modifier/password', [ProfilController::class, 'updatePassword'])->name('profil.update-password');
 });
 
 Route::middleware(['auth', 'admin'])->prefix('backoffice')->name('backoffice.')->group(function () {
