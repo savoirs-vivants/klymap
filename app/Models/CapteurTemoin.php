@@ -1,0 +1,22 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+class CapteurTemoin extends Model
+{
+    protected $fillable = ['user_id', 'name', 'lat', 'lng'];
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function mesures(): HasMany
+    {
+        return $this->hasMany(CapteurTemoinMesure::class);
+    }
+}
