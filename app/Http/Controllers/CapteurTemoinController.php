@@ -53,6 +53,25 @@ class CapteurTemoinController extends Controller
         ], 201);
     }
 
+    public function show(CapteurTemoin $capteurTemoin)
+    {
+        $this->authorize($capteurTemoin);
+
+        $mesures = $capteurTemoin->mesures()->orderBy('enregistre_le')->get()
+            ->map(fn ($m) => [
+                'enregistre_le' => $m->enregistre_le->format('Y-m-d H:i:s'),
+                'sht_temp'      => (float) $m->sht_temp,
+                'sht_hum'       => (float) $m->sht_hum,
+                'tmp_temp'      => (float) $m->tmp_temp,
+            ]);
+
+        return response()->json([
+            'id'      => $capteurTemoin->id,
+            'name'    => $capteurTemoin->name,
+            'mesures' => $mesures,
+        ]);
+    }
+
     public function update(Request $request, CapteurTemoin $capteurTemoin)
     {
         $this->authorize($capteurTemoin);
@@ -95,7 +114,7 @@ class CapteurTemoinController extends Controller
         ]);
     }
 
-    private function buildXlsx(CapteurTemoin $capteurTemoin, $mesures): string
+    private function buildXlsx(CapteurTemoin $capteurTemoin, \Illuminate\Support\Collection $mesures): string
     {
         $esc = fn ($v) => htmlspecialchars((string) $v, ENT_XML1);
 

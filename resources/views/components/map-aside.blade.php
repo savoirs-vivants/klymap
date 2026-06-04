@@ -36,13 +36,19 @@
                     <button
                         onclick="window.activatePlacementMode('temoin')"
                         class="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-700 hover:bg-teal-600 text-teal-200 hover:text-white text-xs font-semibold transition-colors"
-                        title="Placer un capteur témoin sur la carte"
                     >
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                         Ajouter
                     </button>
                     @endauth
                 </div>
+
+                @auth
+                <div class="mt-3 flex items-start gap-2 px-2 py-2.5 rounded-lg bg-teal-700/40 border border-teal-600/30">
+                    <svg class="w-3.5 h-3.5 text-teal-300 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <p class="text-xs text-teal-200 leading-relaxed">Cliquez sur la carte pour placer un <strong class="text-white">point de mesure</strong> et calculer l'ICU.</p>
+                </div>
+                @endauth
             </div>
         </div>
 

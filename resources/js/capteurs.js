@@ -25,6 +25,7 @@ window.toggleCapteursMenu = function () {
 
 window.activatePlacementMode = function (type) {
     placementMode = type;
+    window._placementMode = type;
 
     const banner = document.getElementById('placement-banner');
     if (!banner) return;
@@ -39,6 +40,7 @@ window.activatePlacementMode = function (type) {
 
 window.cancelPlacementMode = function () {
     placementMode = null;
+    window._placementMode = null;
     pendingLatLng = null;
 
     const banner = document.getElementById('placement-banner');
