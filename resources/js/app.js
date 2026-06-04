@@ -5,3 +5,4 @@ import './backoffice.js';
 import './capteurs.js';
 import './campagnes-gestion.js';
 import './campagne.js';
+import './join-session.js';
