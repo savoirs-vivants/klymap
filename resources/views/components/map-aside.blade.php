@@ -5,29 +5,43 @@
             <h2 class="text-xs font-bold uppercase tracking-wider text-teal-300 mb-4">Légende : Intensité ICU</h2>
             <div class="flex flex-col gap-4">
                 <div class="flex items-center gap-3">
-                    <div class="w-4 h-4 rounded-full bg-[#1e3a8a] shadow-sm ring-1 ring-white/10"></div>
+                    <div class="w-4 h-4 rounded-full bg-[#1e3a8a] shadow-sm ring-1 ring-white/10 shrink-0"></div>
                     <span class="text-sm font-medium text-teal-100">0 à 0,5 °C</span>
                 </div>
                 <div class="flex items-center gap-3">
-                    <div class="w-4 h-4 rounded-full bg-[#3b82f6] shadow-sm ring-1 ring-white/10"></div>
+                    <div class="w-4 h-4 rounded-full bg-[#3b82f6] shadow-sm ring-1 ring-white/10 shrink-0"></div>
                     <span class="text-sm font-medium text-teal-100">0,5 à 1 °C</span>
                 </div>
                 <div class="flex items-center gap-3">
-                    <div class="w-4 h-4 rounded-full bg-[#f472b6] shadow-sm ring-1 ring-white/10"></div>
+                    <div class="w-4 h-4 rounded-full bg-[#f472b6] shadow-sm ring-1 ring-white/10 shrink-0"></div>
                     <span class="text-sm font-medium text-teal-100">1 à 1,5 °C</span>
                 </div>
                 <div class="flex items-center gap-3">
-                    <div class="w-4 h-4 rounded-full bg-[#f97316] shadow-sm ring-1 ring-white/10"></div>
+                    <div class="w-4 h-4 rounded-full bg-[#f97316] shadow-sm ring-1 ring-white/10 shrink-0"></div>
                     <span class="text-sm font-medium text-teal-100">1,5 à 2 °C</span>
                 </div>
                 <div class="flex items-center gap-3">
-                    <div class="w-4 h-4 rounded-full bg-[#ef4444] shadow-sm ring-1 ring-white/10"></div>
+                    <div class="w-4 h-4 rounded-full bg-[#ef4444] shadow-sm ring-1 ring-white/10 shrink-0"></div>
                     <span class="text-sm font-medium text-teal-100">> 2 °C</span>
                 </div>
+
                 <div class="w-full h-px bg-teal-600 my-1"></div>
-                <div class="flex items-center gap-3">
-                    <div class="w-4 h-4 rounded-full bg-slate-900 shadow-sm ring-1 ring-white/10"></div>
-                    <span class="text-sm font-medium text-teal-100">Capteur Témoin</span>
+
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-4 h-4 rounded-full bg-slate-900 shadow-sm ring-1 ring-white/10 shrink-0"></div>
+                        <span class="text-sm font-medium text-teal-100">Capteur Témoin</span>
+                    </div>
+                    @auth
+                    <button
+                        onclick="window.activatePlacementMode('temoin')"
+                        class="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-700 hover:bg-teal-600 text-teal-200 hover:text-white text-xs font-semibold transition-colors"
+                        title="Placer un capteur témoin sur la carte"
+                    >
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                        Ajouter
+                    </button>
+                    @endauth
                 </div>
             </div>
         </div>
@@ -39,11 +53,6 @@
                     <a href="{{ route('home') }}" class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-teal-100 hover:bg-teal-700 transition-colors {{ request()->routeIs('home') || request()->routeIs('dashboard') ? 'bg-teal-700' : '' }}">
                         <svg class="w-4 h-4 text-teal-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12h18"/></svg>
                         Carte
-                    </a>
-
-                    <a href="#" class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-teal-100 hover:bg-teal-700 transition-colors">
-                        <svg class="w-4 h-4 text-teal-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/></svg>
-                        Capteurs
                     </a>
 
                     @if(auth()->user()->isAdmin())
