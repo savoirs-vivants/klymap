@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\BackofficeController;
+use App\Http\Controllers\CapteurTemoinController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\ResetPasswordController;
@@ -26,6 +27,14 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', fn () => view('welcome'))->name('dashboard');
     Route::post('/deconnexion', [LoginController::class, 'destroy'])->name('logout');
+
+    Route::prefix('api')->name('api.')->group(function () {
+        Route::get('/capteur-temoins', [CapteurTemoinController::class, 'index'])->name('temoins.index');
+        Route::post('/capteur-temoins', [CapteurTemoinController::class, 'store'])->name('temoins.store');
+        Route::put('/capteur-temoins/{capteurTemoin}', [CapteurTemoinController::class, 'update'])->name('temoins.update');
+        Route::delete('/capteur-temoins/{capteurTemoin}', [CapteurTemoinController::class, 'destroy'])->name('temoins.destroy');
+        Route::get('/capteur-temoins/{capteurTemoin}/export', [CapteurTemoinController::class, 'export'])->name('temoins.export');
+    });
 });
 
 Route::middleware(['auth', 'admin'])->prefix('backoffice')->name('backoffice.')->group(function () {
