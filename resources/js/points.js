@@ -656,7 +656,7 @@ async function savePoint() {
         if (!isEdit) {
             addPointMarker(data);
         } else {
-            pointsOnMap[editingPoint.id]?.setIcon(buildPointIcon(data.icu_value));
+            pointsOnMap[editingPoint.id]?.setIcon(buildPointIcon(data));
             pointsOnMap[editingPoint.id]?.setPopupContent(pointPopupContent(data));
         }
 
@@ -685,11 +685,26 @@ window.deletePoint = async function (id) {
 };
 
 /* ══════════════════ Map markers ══════════════════ */
-function buildPointIcon(icuValue) {
-    const color = icuColor(icuValue);
+function buildPointIcon(p) {
+    const color = icuColor(p.icu_value);
+
+    const needsVerification = p.std_dev !== null && p.std_dev > 0.5;
+
+    let badge = '';
+    if (needsVerification) {
+        badge = `
+            <div style="position:absolute; top:-4px; right:-4px; width:10px; height:10px; background:#ef4444; border:2px solid #fff; border-radius:50%; box-shadow:0 1px 3px rgba(0,0,0,0.3); z-index:10;"></div>
+        `;
+    }
+
     return window.L.divIcon({
         className: '',
-        html: `<div style="width:18px;height:18px;border-radius:50%;background:${color};border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.35)"></div>`,
+        html: `
+            <div style="position:relative; width:18px; height:18px;">
+                <div style="width:100%; height:100%; border-radius:50%; background:${color}; border:3px solid #fff; box-shadow:0 2px 6px rgba(0,0,0,0.35);"></div>
+                ${badge}
+            </div>
+        `,
         iconSize:   [18, 18],
         iconAnchor: [9, 9],
     });
@@ -699,12 +714,24 @@ function pointPopupContent(p) {
     const color = icuColor(p.icu_value);
     const icu   = p.icu_value !== null ? `${p.icu_value} °C` : '—';
     const data  = JSON.stringify(p).replace(/"/g, '&quot;');
+
+    let warningHtml = '';
+    if (p.std_dev !== null && p.std_dev > 0.5) {
+        warningHtml = `
+            <p style="font-size:10px; font-weight:600; color:#ef4444; margin:0 0 8px; display:flex; align-items:start; gap:4px; line-height:1.2;">
+                <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="flex-shrink:0; margin-top:1px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+                Vérification requise (σ = ${p.std_dev})
+            </p>
+        `;
+    }
+
     return `
         <div style="min-width:180px;font-family:'Space Grotesk',sans-serif">
             <p style="font-size:13px;font-weight:700;color:#0f172a;margin:0 0 2px">🌡 ${p.name}</p>
             <p style="font-size:11px;color:#64748b;margin:0 0 2px">Témoin : ${p.temoin_name}</p>
             <p style="font-size:11px;color:#64748b;margin:0 0 10px">Posé par : ${p.user_name}</p>
-            <p style="font-size:16px;font-weight:900;color:${color};margin:0 0 10px">ICU : ${icu}</p>
+            <p style="font-size:16px;font-weight:900;color:${color};margin:0 0 4px">ICU : ${icu}</p>
+            ${warningHtml}
             <button onclick="window.openPointModal(JSON.parse(this.dataset.p))" data-p="${data}"
                 style="width:100%;padding:6px 0;font-size:12px;font-weight:600;color:#fff;background:#0f172a;border:none;border-radius:8px;cursor:pointer">
                 Détail
@@ -714,7 +741,7 @@ function pointPopupContent(p) {
 
 function addPointMarker(p) {
     if (!window._klymapInstance) return;
-    const marker = window.L.marker([p.lat, p.lng], { icon: buildPointIcon(p.icu_value) })
+    const marker = window.L.marker([p.lat, p.lng], { icon: buildPointIcon(p) })
         .addTo(window._klymapInstance)
         .bindPopup(pointPopupContent(p));
     marker.pointData = p;
