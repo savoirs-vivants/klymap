@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Backoffice\UserRequest;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 
 class BackofficeController extends Controller
 {
@@ -48,7 +49,7 @@ class BackofficeController extends Controller
 
     public function destroy(User $user)
     {
-        if ($user->id === auth()->id()) {
+        if ($user->id === Auth::id()) {
             return back()->with('error', 'Vous ne pouvez pas supprimer votre propre compte.');
         }
 

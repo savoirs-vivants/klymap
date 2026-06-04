@@ -469,3 +469,30 @@
     .alert-success { margin: 0 24px; }
     .form-group-row { grid-template-columns: 1fr; }
 }
+
+/* ── Marker témoin (généré dynamiquement en JS, ne peut pas être Tailwind) ── */
+
+.marker-temoin {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #1e293b;
+    border: 3px solid #fff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+}
+
+.temoin-popup-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 12px;
+    background: #0f172a;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.temoin-popup-btn:hover { background: #0d9488; }
