@@ -717,10 +717,10 @@ function addPointMarker(p) {
     const marker = window.L.marker([p.lat, p.lng], { icon: buildPointIcon(p.icu_value) })
         .addTo(window._klymapInstance)
         .bindPopup(pointPopupContent(p));
+    marker.pointData = p;
     pointsOnMap[p.id] = marker;
 }
 
-/* ══════════════════ Init ══════════════════ */
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('point-file-input')?.addEventListener('change', async (e) => {
         const file = e.target.files[0];
@@ -809,3 +809,72 @@ document.addEventListener('klymap:ready', () => {
         .then((points) => points.forEach(addPointMarker))
         .catch(() => {});
 });
+
+window.toggleMapFilter = function(btnElement, min, max) {
+    const allButtons = document.querySelectorAll('.legend-filter');
+    const resetBtn = document.getElementById('btn-reset-filters');
+
+    if (btnElement.classList.contains('ring-1')) {
+        window.resetMapFilters();
+        return;
+    }
+
+    if (resetBtn) resetBtn.classList.remove('hidden');
+
+    allButtons.forEach(btn => {
+        btn.classList.remove('bg-teal-900/40', 'ring-1', 'ring-white/50');
+        btn.classList.add('opacity-30');
+        const dot = btn.querySelector('div');
+        if (dot) dot.classList.remove('scale-125');
+    });
+
+    btnElement.classList.remove('opacity-30');
+    btnElement.classList.add('bg-teal-900/40', 'ring-1', 'ring-white/50', 'opacity-100');
+    const dot = btnElement.querySelector('div');
+    if (dot) dot.classList.add('scale-125');
+
+    Object.values(pointsOnMap).forEach(marker => {
+        if (!marker.pointData) return;
+
+        const icu = marker.pointData.icu_value;
+        let shouldShow = false;
+
+        if (min === 'temoin') {
+            shouldShow = (icu === null || icu === undefined);
+        } else {
+            if (icu !== null && icu >= min && icu < max) {
+                shouldShow = true;
+            }
+        }
+
+        if (shouldShow) {
+            if (!window._klymapInstance.hasLayer(marker)) {
+                window._klymapInstance.addLayer(marker);
+            }
+        } else {
+            if (window._klymapInstance.hasLayer(marker)) {
+                window._klymapInstance.removeLayer(marker);
+            }
+        }
+    });
+};
+
+window.resetMapFilters = function() {
+    const allButtons = document.querySelectorAll('.legend-filter');
+    const resetBtn = document.getElementById('btn-reset-filters');
+
+    if (resetBtn) resetBtn.classList.add('hidden');
+
+    allButtons.forEach(btn => {
+        btn.classList.remove('bg-teal-900/40', 'ring-1', 'ring-white/50', 'opacity-30');
+        btn.classList.add('opacity-100');
+        const dot = btn.querySelector('div');
+        if (dot) dot.classList.remove('scale-125');
+    });
+
+    Object.values(pointsOnMap).forEach(marker => {
+        if (!window._klymapInstance.hasLayer(marker)) {
+            window._klymapInstance.addLayer(marker);
+        }
+    });
+};
