@@ -1,8 +1,8 @@
 <x-layouts.app title="Backoffice — Utilisateurs">
 
-    <div class="mb-6 flex items-center justify-between">
+    <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
-            <h1 class="text-2xl font-bold text-slate-900">Utilisateurs</h1>
+            <h1 class="text-xl sm:text-2xl font-bold text-slate-900">Utilisateurs</h1>
             <p class="text-sm text-slate-500 mt-1">{{ $users->count() }} compte{{ $users->count() > 1 ? 's' : '' }} enregistré{{ $users->count() > 1 ? 's' : '' }}</p>
         </div>
         <button
@@ -28,8 +28,8 @@
         </div>
     @endif
 
-    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-        <table class="w-full text-sm">
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden overflow-x-auto">
+        <table class="w-full text-sm min-w-[600px]">
             <thead>
                 <tr class="bg-slate-50 border-b border-slate-100">
                     <th class="text-left px-6 py-3.5 font-semibold text-slate-600">Utilisateur</th>
@@ -68,7 +68,8 @@
                             <div class="flex items-center justify-end gap-2">
                                 @if ($user->id !== auth()->id())
                                     <button
-                                        onclick="openEditModal({{ $user }})"
+                                        data-user="{{ $user->toJson() }}"
+                                        onclick="openEditModal(JSON.parse(this.getAttribute('data-user')))"
                                         class="p-1.5 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors"
                                         title="Modifier"
                                     >
