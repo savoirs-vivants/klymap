@@ -71,18 +71,24 @@ class CapteurPointController extends Controller
         $this->authorize($capteurPoint);
 
         $request->validate([
-            'name'      => ['required', 'string', 'max:100'],
-            'mesures'   => ['nullable', 'array'],
-            'icu_value' => ['nullable', 'numeric'],
-            'std_dev'   => ['nullable', 'numeric'],
-            'excluded'  => ['nullable', 'array'],
+            'name'              => ['required', 'string', 'max:100'],
+            'capteur_temoin_id' => ['nullable', 'exists:capteur_temoins,id'],
+            'mesures'           => ['nullable', 'array'],
+            'icu_value'         => ['nullable', 'numeric'],
+            'std_dev'           => ['nullable', 'numeric'],
+            'excluded'          => ['nullable', 'array'],
         ]);
 
-        $capteurPoint->update([
+        $update = [
             'name'      => $request->name,
             'icu_value' => $request->icu_value,
             'std_dev'   => $request->std_dev,
-        ]);
+        ];
+        if ($request->filled('capteur_temoin_id')) {
+            $update['capteur_temoin_id'] = $request->capteur_temoin_id;
+        }
+
+        $capteurPoint->update($update);
 
         if ($request->filled('mesures') && count($request->mesures)) {
             $capteurPoint->mesures()->delete();
@@ -96,7 +102,9 @@ class CapteurPointController extends Controller
             }
         }
 
-        return response()->json(['ok' => true]);
+        $capteurPoint->load(['user', 'capteurTemoin']);
+
+        return response()->json($this->pointResource($capteurPoint));
     }
 
     public function destroy(CapteurPoint $capteurPoint)

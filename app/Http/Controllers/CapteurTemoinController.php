@@ -12,16 +12,17 @@ class CapteurTemoinController extends Controller
 {
     public function index()
     {
-        $temoins = CapteurTemoin::with('mesures')
-            ->where('user_id', Auth::id())
-            ->get()
-            ->map(fn ($t) => [
-                'id'          => $t->id,
-                'name'        => $t->name,
-                'lat'         => (float) $t->lat,
-                'lng'         => (float) $t->lng,
-                'mesures_count' => $t->mesures->count(),
-            ]);
+        $query = Auth::check()
+            ? CapteurTemoin::with('mesures')->where('user_id', Auth::id())
+            : CapteurTemoin::withCount('mesures');
+
+        $temoins = $query->get()->map(fn ($t) => [
+            'id'           => $t->id,
+            'name'         => $t->name,
+            'lat'           => (float) $t->lat,
+            'lng'           => (float) $t->lng,
+            'mesures_count' => Auth::check() ? $t->mesures->count() : $t->mesures_count,
+        ]);
 
         return response()->json($temoins);
     }
@@ -55,7 +56,7 @@ class CapteurTemoinController extends Controller
 
     public function show(CapteurTemoin $capteurTemoin)
     {
-        $this->authorize($capteurTemoin);
+        // Lecture publique — autorisation non requise pour consulter les mesures
 
         $mesures = $capteurTemoin->mesures()->orderBy('enregistre_le')->get()
             ->map(fn ($m) => [
