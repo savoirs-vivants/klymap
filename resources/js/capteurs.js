@@ -194,15 +194,18 @@ function exportLocalExcel() {
 ══════════════════════════════════ */
 
 function popupContent(t) {
-    const data = JSON.stringify(t).replace(/"/g, '&quot;');
+    const data    = JSON.stringify(t).replace(/"/g, '&quot;');
+    const isAuth  = document.body.dataset.auth === '1';
+    const buttons = isAuth ? `
+        <div style="display:flex;gap:8px;margin-top:10px">
+            <button onclick="window.openTemoinOverlay(JSON.parse(this.dataset.t))" data-t="${data}" class="temoin-popup-btn">Modifier</button>
+            <button onclick="window.deleteTemoin(${t.id})" style="padding:5px 12px;background:#fee2e2;color:#dc2626;font-size:12px;font-weight:600;border:none;border-radius:8px;cursor:pointer">Supprimer</button>
+        </div>` : '';
     return `
         <div style="min-width:160px;font-family:'Space Grotesk',sans-serif">
             <p style="font-size:13px;font-weight:700;color:#0f172a;margin:0 0 2px">📍 ${t.name}</p>
-            <p style="font-size:11px;color:#64748b;margin:0 0 10px">${t.mesures_count} mesure(s)</p>
-            <div style="display:flex;gap:8px">
-                <button onclick="window.openTemoinOverlay(JSON.parse(this.dataset.t))" data-t="${data}" class="temoin-popup-btn">Modifier</button>
-                <button onclick="window.deleteTemoin(${t.id})" style="padding:5px 12px;background:#fee2e2;color:#dc2626;font-size:12px;font-weight:600;border:none;border-radius:8px;cursor:pointer">Supprimer</button>
-            </div>
+            <p style="font-size:11px;color:#64748b;margin:0">${t.mesures_count} mesure(s)</p>
+            ${buttons}
         </div>`;
 }
 
@@ -327,6 +330,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
 document.addEventListener('klymap:ready', () => {
     if (!window._klymapInstance) return;
+
+    // Charger les témoins pour tout le monde
+    fetch('/api/capteur-temoins')
+        .then((r) => r.json())
+        .then((temoins) => temoins.forEach(addTemoinMarker))
+        .catch(() => {});
+
+    // Actions d'édition réservées aux auth
     if (document.body.dataset.auth !== '1') return;
 
     window._klymapInstance.on('click', (e) => {
@@ -338,15 +349,11 @@ document.addEventListener('klymap:ready', () => {
             banner?.classList.add('hidden');
             banner?.classList.remove('flex');
             placementMode = null;
+            window._placementMode = null;
             if (window._klymapInstance) {
                 window._klymapInstance.getContainer().style.cursor = '';
             }
             window.openTemoinOverlay(null);
         }
     });
-
-    fetch('/api/capteur-temoins')
-        .then((r) => r.json())
-        .then((temoins) => temoins.forEach(addTemoinMarker))
-        .catch(() => {});
 });

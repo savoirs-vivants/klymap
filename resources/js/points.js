@@ -83,7 +83,7 @@ window.openPointModal = function (point = null) {
     const saveBtn      = document.getElementById('point-save-btn');
     const nameInput    = document.getElementById('point-name');
     const temoinSelect = document.getElementById('point-temoin-select');
-    const fileSection  = document.getElementById('point-file-label')?.parentElement;
+    const fileSection  = document.getElementById('point-file-section');
     const recalcBtn    = document.getElementById('btn-recalculate');
 
     if (!isAuth) {
@@ -92,6 +92,7 @@ window.openPointModal = function (point = null) {
         if (nameInput) nameInput.disabled = true;
         if (temoinSelect) temoinSelect.disabled = true;
         if (fileSection) fileSection.classList.add('hidden');
+        document.getElementById('point-alerts-section')?.classList.add('hidden');
         if (recalcBtn) recalcBtn.classList.add('hidden');
     } else {
         if (deleteBtn) {
@@ -139,20 +140,25 @@ async function loadTemoins() {
     } catch {}
 }
 
-/* ══════════════════ Load point detail (edit mode) ══════════════════ */
+/* ══════════════════ Load point detail (edit/view mode) ══════════════════ */
 async function loadPointDetail(id) {
     try {
         const data = await (await fetch(`/api/capteur-points/${id}`)).json();
-        pointMesures = data.mesures ?? [];
+        // Add _idx for the exclusion set to work with loaded mesures
+        pointMesures = (data.mesures ?? []).map((m, i) => ({ ...m, _idx: i }));
 
         const temoinId = data.temoin_id;
         if (temoinId) {
+            setProgress('Chargement des données témoin…');
             const t = await (await fetch(`/api/capteur-temoins/${temoinId}/mesures`)).json();
             temoinMesures = t.mesures ?? [];
+            showTemoinStatus(temoinMesures.length);
         }
 
         if (pointMesures.length) await runAnalysis();
-    } catch {}
+    } catch (e) {
+        console.error('loadPointDetail error:', e);
+    }
 }
 
 /* ══════════════════ File parsing ══════════════════ */
@@ -191,6 +197,7 @@ function detectFlags(mesures) {
 }
 
 function renderAlerts(mesures) {
+    if (document.body.dataset.auth !== '1') return;
     const { flagHum, flagTempDiff } = detectFlags(mesures);
     const section    = document.getElementById('point-alerts-section');
     const allFlagged = [...new Map([...flagHum, ...flagTempDiff].map((m) => [m._idx, m])).values()];
@@ -556,9 +563,11 @@ function renderNightTable(result) {
 
 /* ══════════════════ Progress indicator ══════════════════ */
 function setProgress(text) {
-    const el = document.getElementById('point-progress');
+    const el   = document.getElementById('point-progress');
+    const label = document.getElementById('point-progress-text');
+    if (!el) return;
     if (text) {
-        document.getElementById('point-progress-text').textContent = text;
+        if (label) label.textContent = text;
         el.classList.remove('hidden');
         el.classList.add('flex');
     } else {
@@ -631,39 +640,44 @@ async function runAnalysis() {
 
 /* ══════════════════ Save to backend ══════════════════ */
 async function savePoint() {
-    const name     = document.getElementById('point-name').value.trim();
-    const temoinId = document.getElementById('point-temoin-select').value;
+    const name     = document.getElementById('point-name')?.value.trim();
+    const temoinId = document.getElementById('point-temoin-select')?.value;
 
-    if (!name)     { document.getElementById('point-name').focus(); return; }
-    if (!temoinId) { document.getElementById('point-temoin-select').focus(); return; }
+    if (!name) { document.getElementById('point-name')?.focus(); return; }
     if (!editingPoint && !pointMesures.length) { alert('Importez un fichier de données.'); return; }
+    if (!editingPoint && !temoinId) { document.getElementById('point-temoin-select')?.focus(); return; }
 
     const saveBtn = document.getElementById('point-save-btn');
+    if (!saveBtn) return;
     saveBtn.disabled    = true;
     saveBtn.textContent = 'Enregistrement…';
 
     try {
+        const isEdit = !!editingPoint;
+
         const mesuresWithExcluded = pointMesures.map((m) => ({
-            ...m,
+            enregistre_le: m.enregistre_le,
+            sht_temp: m.sht_temp,
+            sht_hum:  m.sht_hum,
+            tmp_temp: m.tmp_temp,
             excluded: excludedIdx.has(m._idx ?? m.id),
         }));
 
-        const isEdit = !!editingPoint;
-        const url    = isEdit ? `/api/capteur-points/${editingPoint.id}` : '/api/capteur-points';
-        const body   = isEdit
+        const url  = isEdit ? `/api/capteur-points/${editingPoint.id}` : '/api/capteur-points';
+        const body = isEdit
             ? {
                 name,
+                capteur_temoin_id: temoinId ? parseInt(temoinId) : undefined,
                 icu_value: icuResult?.globalICU ?? editingPoint.icu_value,
                 std_dev:   icuResult?.globalStd  ?? editingPoint.std_dev,
-                mesures:   mesuresWithExcluded,
-                excluded:  [...excludedIdx],
+                mesures:   mesuresWithExcluded.length ? mesuresWithExcluded : undefined,
               }
             : {
                 name,
                 capteur_temoin_id: parseInt(temoinId),
-                lat:      pendingPoint?.latlng?.lat,
-                lng:      pendingPoint?.latlng?.lng,
-                mesures:  mesuresWithExcluded,
+                lat:       pendingPoint?.latlng?.lat,
+                lng:       pendingPoint?.latlng?.lng,
+                mesures:   mesuresWithExcluded,
                 icu_value: icuResult?.globalICU ?? null,
                 std_dev:   icuResult?.globalStd  ?? null,
               };
@@ -680,8 +694,13 @@ async function savePoint() {
         if (!isEdit) {
             addPointMarker(data);
         } else {
-            pointsOnMap[editingPoint.id]?.setIcon(buildPointIcon(data));
-            pointsOnMap[editingPoint.id]?.setPopupContent(pointPopupContent(data));
+            const marker = pointsOnMap[editingPoint.id];
+            if (marker) {
+                // Fusionner les données retournées avec celles en mémoire pour garder icu_value si inchangée
+                const merged = { ...editingPoint, ...data };
+                marker.setIcon(buildPointIcon(merged.icu_value));
+                marker.setPopupContent(pointPopupContent(merged));
+            }
         }
 
         pendingPoint = null;
@@ -690,8 +709,10 @@ async function savePoint() {
         console.error(err);
         alert("Erreur lors de l'enregistrement.");
     } finally {
-        saveBtn.disabled    = false;
-        saveBtn.textContent = editingPoint ? 'Mettre à jour' : 'Valider';
+        if (saveBtn) {
+            saveBtn.disabled    = false;
+            saveBtn.textContent = editingPoint ? 'Mettre à jour' : 'Valider';
+        }
     }
 }
 
@@ -847,19 +868,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
 document.addEventListener('klymap:ready', () => {
     if (!window._klymapInstance) return;
-    const isAuth = document.body.dataset.auth === '1';
-    window._klymapInstance.on('click', (e) => {
-        if (window._placementMode) return;
 
-        if (isAuth) {
-            onMapClickPoint(e.latlng);
-        }
-    });
-
+    // Charger les points pour tout le monde
     fetch('/api/capteur-points')
         .then((r) => r.json())
         .then((points) => points.forEach(addPointMarker))
         .catch(() => {});
+
+    // Clic pour créer — auth seulement
+    if (document.body.dataset.auth !== '1') return;
+
+    window._klymapInstance.on('click', (e) => {
+        if (window._placementMode) return;
+        onMapClickPoint(e.latlng);
+    });
 });
 
 window.toggleMapFilter = function(btnElement, min, max) {
@@ -887,26 +909,17 @@ window.toggleMapFilter = function(btnElement, min, max) {
 
     Object.values(pointsOnMap).forEach(marker => {
         if (!marker.pointData) return;
-
         const icu = marker.pointData.icu_value;
         let shouldShow = false;
-
         if (min === 'temoin') {
             shouldShow = (icu === null || icu === undefined);
         } else {
-            if (icu !== null && icu >= min && icu < max) {
-                shouldShow = true;
-            }
+            if (icu !== null && icu >= min && icu < max) shouldShow = true;
         }
-
         if (shouldShow) {
-            if (!window._klymapInstance.hasLayer(marker)) {
-                window._klymapInstance.addLayer(marker);
-            }
+            if (!window._klymapInstance.hasLayer(marker)) window._klymapInstance.addLayer(marker);
         } else {
-            if (window._klymapInstance.hasLayer(marker)) {
-                window._klymapInstance.removeLayer(marker);
-            }
+            if (window._klymapInstance.hasLayer(marker)) window._klymapInstance.removeLayer(marker);
         }
     });
 };

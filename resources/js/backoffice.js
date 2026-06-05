@@ -1,43 +1,65 @@
 window.openModal = function (id) {
-    document.getElementById(id)?.classList.remove('hidden');
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.remove('hidden');
+    el.classList.add('flex');
 };
 
 window.closeModal = function (id) {
-    document.getElementById(id)?.classList.add('hidden');
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.add('hidden');
+    el.classList.remove('flex');
 };
 
 window.openEditModal = function (user) {
+    const modal = document.getElementById('modal-edit');
+    if (!modal) { console.error('modal-edit not found'); return; }
+
     const form = document.getElementById('form-edit');
+    if (!form) { console.error('form-edit not found'); return; }
+
     form.action = `/backoffice/utilisateurs/${user.id}`;
 
-    form.querySelector('[name="firstname"]').value   = user.firstname;
-    form.querySelector('[name="name"]').value        = user.name;
-    form.querySelector('[name="email"]').value       = user.email;
-    form.querySelector('[name="role"]').value        = user.role;
-    form.querySelector('[name="password"]').value    = '';
-    form.querySelector('[name="password_confirmation"]').value = '';
+    const set = (name, val) => {
+        const el = form.querySelector(`[name="${name}"]`);
+        if (el) el.value = val ?? '';
+    };
 
-    openModal('modal-edit');
-}
+    set('firstname', user.firstname);
+    set('name', user.name);
+    set('email', user.email);
+    set('role', user.role);
+    set('password', '');
+    set('password_confirmation', '');
+
+    window.openModal('modal-edit');
+};
 
 window.openDeleteModal = function (id, name) {
-    document.getElementById('form-delete').action = `/backoffice/utilisateurs/${id}`;
-    document.getElementById('delete-name').textContent = name;
-    openModal('modal-delete');
-}
+    const form = document.getElementById('form-delete');
+    if (form) form.action = `/backoffice/utilisateurs/${id}`;
+    const nameEl = document.getElementById('delete-name');
+    if (nameEl) nameEl.textContent = name;
+    window.openModal('modal-delete');
+};
 
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.modal-overlay').forEach((overlay) => {
         overlay.addEventListener('click', (e) => {
             if (e.target === overlay) {
                 overlay.classList.add('hidden');
+                overlay.classList.remove('flex');
             }
         });
     });
 
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
-            document.querySelectorAll('.modal-overlay:not(.hidden)').forEach((m) => m.classList.add('hidden'));
+            document.querySelectorAll('.modal-overlay.flex').forEach((m) => {
+                m.classList.add('hidden');
+                m.classList.remove('flex');
+            });
         }
     });
 });
