@@ -538,9 +538,6 @@ body:has(.aside-wrapper.aside-open) .aside-open-backdrop {
     .aside-burger { display: none; }
 }
 
-/* Filtre légende actif / inactif */
-.legend-filter { opacity: 1; }
-.legend-filter:not(.active-filter) { opacity: 0.35; }
 
 /* ── Marker témoin (généré dynamiquement en JS, ne peut pas être Tailwind) ── */
 

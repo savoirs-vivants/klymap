@@ -884,62 +884,98 @@ document.addEventListener('klymap:ready', () => {
     });
 });
 
+// Variable mémoire pour retenir le filtre actif
+window.activeFilterNode = null;
+
 window.toggleMapFilter = function(btnElement, min, max) {
     const allButtons = document.querySelectorAll('.legend-filter');
     const resetBtn = document.getElementById('btn-reset-filters');
 
-    if (btnElement.classList.contains('ring-1')) {
+    // 1. Si on clique sur le filtre DÉJÀ actif : on désactive tout
+    if (window.activeFilterNode === btnElement) {
         window.resetMapFilters();
         return;
     }
 
+    // 2. Sinon, on mémorise le clic et on affiche "Réinitialiser"
+    window.activeFilterNode = btnElement;
     if (resetBtn) resetBtn.classList.remove('hidden');
 
+    // 3. Changement d'apparence des boutons (Opacité à 40% pour les inactifs)
     allButtons.forEach(btn => {
-        btn.classList.remove('bg-teal-900/40', 'ring-1', 'ring-white/50');
-        btn.classList.add('opacity-30');
         const dot = btn.querySelector('div');
-        if (dot) dot.classList.remove('scale-125');
+        if (btn === btnElement) {
+            btn.classList.remove('opacity-40');
+            btn.classList.add('bg-teal-900/60', 'ring-1', 'ring-white/50');
+            if (dot) dot.classList.add('scale-125');
+        } else {
+            btn.classList.remove('bg-teal-900/60', 'ring-1', 'ring-white/50');
+            btn.classList.add('opacity-40');
+            if (dot) dot.classList.remove('scale-125');
+        }
     });
 
-    btnElement.classList.remove('opacity-30');
-    btnElement.classList.add('bg-teal-900/40', 'ring-1', 'ring-white/50', 'opacity-100');
-    const dot = btnElement.querySelector('div');
-    if (dot) dot.classList.add('scale-125');
-
+    // 4. Filtrage des points ICU sur la carte
     Object.values(pointsOnMap).forEach(marker => {
         if (!marker.pointData) return;
         const icu = marker.pointData.icu_value;
         let shouldShow = false;
+
         if (min === 'temoin') {
             shouldShow = (icu === null || icu === undefined);
         } else {
             if (icu !== null && icu >= min && icu < max) shouldShow = true;
         }
+
         if (shouldShow) {
             if (!window._klymapInstance.hasLayer(marker)) window._klymapInstance.addLayer(marker);
         } else {
             if (window._klymapInstance.hasLayer(marker)) window._klymapInstance.removeLayer(marker);
         }
     });
+
+    // 5. Filtrage des capteurs témoins (s'ils existent sur la carte)
+    if (typeof temoinsMarkers !== 'undefined') {
+        Object.values(temoinsMarkers).forEach(marker => {
+            let shouldShow = (min === 'temoin'); // Les témoins ne s'affichent que si on clique sur le filtre "temoin"
+            if (shouldShow) {
+                if (!window._klymapInstance.hasLayer(marker)) window._klymapInstance.addLayer(marker);
+            } else {
+                if (window._klymapInstance.hasLayer(marker)) window._klymapInstance.removeLayer(marker);
+            }
+        });
+    }
 };
 
 window.resetMapFilters = function() {
+    // On vide la mémoire
+    window.activeFilterNode = null;
+
     const allButtons = document.querySelectorAll('.legend-filter');
     const resetBtn = document.getElementById('btn-reset-filters');
 
     if (resetBtn) resetBtn.classList.add('hidden');
 
+    // On restaure l'apparence de tous les boutons
     allButtons.forEach(btn => {
-        btn.classList.remove('bg-teal-900/40', 'ring-1', 'ring-white/50', 'opacity-30');
-        btn.classList.add('opacity-100');
+        btn.classList.remove('bg-teal-900/60', 'ring-1', 'ring-white/50', 'opacity-40');
         const dot = btn.querySelector('div');
         if (dot) dot.classList.remove('scale-125');
     });
 
+    // On réaffiche tous les points ICU
     Object.values(pointsOnMap).forEach(marker => {
         if (!window._klymapInstance.hasLayer(marker)) {
             window._klymapInstance.addLayer(marker);
         }
     });
+
+    // On réaffiche tous les points témoins
+    if (typeof temoinsMarkers !== 'undefined') {
+        Object.values(temoinsMarkers).forEach(marker => {
+            if (!window._klymapInstance.hasLayer(marker)) {
+                window._klymapInstance.addLayer(marker);
+            }
+        });
+    }
 };
