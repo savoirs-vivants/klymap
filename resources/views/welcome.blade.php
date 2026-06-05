@@ -17,9 +17,12 @@
 
     <x-app-header />
 
-    <div class="flex flex-1 overflow-hidden">
+    <div class="flex flex-1 overflow-hidden relative">
 
-        <x-map-aside />
+        <div id="map-aside-el" class="aside-wrapper">
+            <x-map-aside />
+        </div>
+        <div class="aside-open-backdrop" onclick="document.getElementById('map-aside-el').classList.remove('aside-open')"></div>
 
         <main class="flex-1 relative bg-slate-100">
             <div id="map" class="absolute inset-0 w-full h-full z-10"></div>
@@ -128,9 +131,9 @@
         </main>
     </div>
 
-    @auth
     {{-- ══════════════════════════════════════════
          Modale Création / Détail point de mesure
+         Visible auth + non-auth (read-only)
     ══════════════════════════════════════════ --}}
     <div id="modal-point" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" id="modal-point-backdrop"></div>
@@ -154,16 +157,18 @@
                 {{-- 1. Infos --}}
                 <section>
                     <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">1 — Informations</h3>
-                    <div class="grid grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">Nom du point</label>
                             <input id="point-name" type="text" placeholder="Ex : Place du Capitole"
-                                class="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:border-teal-500 focus:ring-2 focus:ring-teal-100 outline-none transition-all placeholder:text-slate-300">
+                                class="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:border-teal-500 focus:ring-2 focus:ring-teal-100 outline-none transition-all placeholder:text-slate-300"
+                                @guest readonly @endguest>
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">Capteur témoin associé</label>
                             <select id="point-temoin-select"
-                                class="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:border-teal-500 focus:ring-2 focus:ring-teal-100 outline-none transition-all">
+                                class="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:border-teal-500 focus:ring-2 focus:ring-teal-100 outline-none transition-all"
+                                @guest disabled @endguest>
                                 <option value="">— Sélectionner —</option>
                             </select>
                         </div>
@@ -171,7 +176,7 @@
                 </section>
 
                 {{-- 2. Données --}}
-                <section>
+                <section id="point-file-section">
                     <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">2 — Données de mesure</h3>
                     <label for="point-file-input" class="flex flex-col items-center justify-center gap-2 px-4 py-6 border-2 border-dashed border-slate-200 rounded-xl cursor-pointer bg-slate-50 hover:border-teal-400 hover:bg-teal-50/50 transition-all group">
                         <svg class="w-8 h-8 text-slate-300 group-hover:text-teal-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
@@ -278,6 +283,7 @@
 
             {{-- Footer fixed --}}
             <div class="px-6 py-4 border-t border-slate-100 flex items-center justify-between shrink-0">
+                @auth
                 <button id="point-delete-btn" class="hidden flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition-colors">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                     Supprimer
@@ -286,19 +292,21 @@
                     <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
                     <span id="point-progress-text">Analyse en cours…</span>
                 </div>
+                @endauth
                 <div class="flex items-center gap-3 ml-auto">
                     <button onclick="window.closePointModal()" class="px-4 py-2 text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors">
-                        Annuler
+                        Fermer
                     </button>
+                    @auth
                     <button id="point-save-btn" class="px-5 py-2 text-sm font-semibold text-white bg-slate-900 hover:bg-teal-600 rounded-xl transition-all active:scale-95" disabled>
                         Valider
                     </button>
+                    @endauth
                 </div>
             </div>
 
         </div>
     </div>
-    @endauth
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 </body>

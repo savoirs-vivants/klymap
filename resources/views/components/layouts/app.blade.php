@@ -13,10 +13,13 @@
 
     <x-app-header />
 
-    <div class="flex flex-1 overflow-hidden">
-        <x-map-aside />
+    <div class="flex flex-1 overflow-hidden relative">
+        <div id="app-aside-el" class="aside-wrapper">
+            <x-map-aside :show-filters="false" />
+        </div>
+        <div class="aside-open-backdrop" onclick="document.getElementById('app-aside-el').classList.remove('aside-open')"></div>
 
-        <main class="flex-1 overflow-y-auto p-6 lg:p-8">
+        <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
             <div class="max-w-6xl mx-auto">
                 {{ $slot }}
             </div>
