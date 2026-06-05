@@ -470,6 +470,78 @@
     .form-group-row { grid-template-columns: 1fr; }
 }
 
+/* ── Aside responsive (contourne le !important de Tailwind .hidden) ── */
+
+/* ──────────────────────────────────────────
+   Aside responsive
+   - mobile (<768px): caché par défaut, burger pour ouvrir
+   - tablette (≥768px): toujours visible, étroit (w-16), icônes
+   - desktop (≥1024px): toujours visible, large (w-72), texte
+────────────────────────────────────────── */
+
+.aside-wrapper {
+    display: none;
+    flex-shrink: 0;
+    height: 100%;
+    align-self: stretch;
+}
+
+@media (min-width: 768px) {
+    .aside-wrapper {
+        display: block !important;
+    }
+}
+
+/* Mobile : ouvert via burger */
+.aside-wrapper.aside-open {
+    display: block;
+    position: fixed;
+    top: 64px;
+    left: 0;
+    bottom: 0;
+    z-index: 200;
+    height: calc(100vh - 64px);
+    width: 240px;
+}
+
+.aside-wrapper.aside-open aside {
+    width: 100% !important;
+    height: 100%;
+}
+
+/* Fond sombre mobile */
+.aside-open-backdrop { display: none; }
+
+body:has(.aside-wrapper.aside-open) .aside-open-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 199;
+}
+
+/* Texte de l'aside : masqué sous md, visible md+ et mobile-ouvert */
+.aside-text { display: none; }
+
+@media (min-width: 768px) {
+    .aside-text { display: revert; }
+}
+
+.aside-wrapper.aside-open .aside-text {
+    display: revert;
+}
+
+/* Burger : visible mobile uniquement */
+.aside-burger { display: block; }
+
+@media (min-width: 768px) {
+    .aside-burger { display: none; }
+}
+
+/* Filtre légende actif / inactif */
+.legend-filter { opacity: 1; }
+.legend-filter:not(.active-filter) { opacity: 0.35; }
+
 /* ── Marker témoin (généré dynamiquement en JS, ne peut pas être Tailwind) ── */
 
 .marker-temoin {
