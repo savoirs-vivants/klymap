@@ -12,14 +12,16 @@ window.closeModal = function (id) {
     el.classList.remove('flex');
 };
 
-window.openEditModal = function (user) {
+window.openUserEditModal = function (userDataString) {
+    const user = JSON.parse(userDataString);
+
     const modal = document.getElementById('modal-edit');
     if (!modal) { console.error('modal-edit not found'); return; }
 
-    const form = document.getElementById('form-edit');
-    if (!form) { console.error('form-edit not found'); return; }
+    const form = document.getElementById('form-edit-user');
+    if (!form) { console.error('form-edit-user not found'); return; }
 
-    form.action = `/backoffice/utilisateurs/${user.id}`;
+    form.setAttribute('action', `/backoffice/utilisateurs/${user.id}`);
 
     const set = (name, val) => {
         const el = form.querySelector(`[name="${name}"]`);
