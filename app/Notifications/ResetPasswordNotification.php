@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Lang;
 
 class ResetPasswordNotification extends BaseResetPassword
 {
-    protected function buildMailMessage(string $url): MailMessage
+    protected function buildMailMessage($url)
     {
         return (new MailMessage)
             ->subject('Réinitialisation de votre mot de passe — Klymap')
