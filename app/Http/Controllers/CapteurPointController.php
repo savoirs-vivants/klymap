@@ -8,12 +8,23 @@ use App\Models\CapteurTemoin;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use OpenApi\Attributes as OA;
 
 class CapteurPointController extends Controller
 {
+    #[OA\Get(
+        path: '/api/capteur-points',
+        operationId: 'getCapteurPoints',
+        tags: ['Points'],
+        summary: 'Obtenir la liste des points de mesure',
+        description: 'Retourne tous les points de mesure (capteurs mobiles) avec leurs coordonnées, exploitable pour un export géographique vers QGIS.',
+        responses: [
+            new OA\Response(response: 200, description: 'Opération réussie'),
+        ]
+    )]
     public function index()
     {
-        $points = CapteurPoint::with(['user', 'capteurTemoin'])
+        $points = CapteurPoint::with(['user', 'capteurTemoin', 'participant'])
             ->get()
             ->map(fn($p) => $this->pointResource($p));
 
@@ -32,6 +43,8 @@ class CapteurPointController extends Controller
             'std_dev'           => ['nullable', 'numeric'],
         ]);
 
+        $participant = session('participant');
+
         $point = CapteurPoint::create([
             'user_id'           => Auth::id(),
             'capteur_temoin_id' => $request->capteur_temoin_id,
@@ -40,15 +53,37 @@ class CapteurPointController extends Controller
             'lng'               => $request->lng,
             'icu_value'         => $request->icu_value,
             'std_dev'           => $request->std_dev,
+            'session_id'        => $participant['id_session'] ?? null,
+            'participant_id'    => $participant['id'] ?? null,
         ]);
 
         $this->saveMesures($point, $request->mesures);
 
-        $point->load(['user', 'capteurTemoin']);
+        $point->load(['user', 'capteurTemoin', 'participant']);
 
         return response()->json($this->pointResource($point), 201);
     }
 
+    #[OA\Get(
+        path: '/api/capteur-points/{capteurPoint}',
+        operationId: 'getCapteurPoint',
+        tags: ['Points'],
+        summary: 'Obtenir le détail d\'un point de mesure',
+        description: 'Retourne un point de mesure (coordonnées, métadonnées) et l\'historique de ses mesures.',
+        parameters: [
+            new OA\Parameter(
+                name: 'capteurPoint',
+                description: 'Identifiant du point de mesure',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'integer')
+            ),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Opération réussie'),
+            new OA\Response(response: 404, description: 'Point introuvable'),
+        ]
+    )]
     public function show(CapteurPoint $capteurPoint)
     {
         $capteurPoint->load(['user', 'capteurTemoin', 'mesures' => fn($q) => $q->orderBy('enregistre_le')]);
@@ -102,7 +137,7 @@ class CapteurPointController extends Controller
             }
         }
 
-        $capteurPoint->load(['user', 'capteurTemoin']);
+        $capteurPoint->load(['user', 'capteurTemoin', 'participant']);
 
         return response()->json($this->pointResource($capteurPoint));
     }
@@ -119,6 +154,7 @@ class CapteurPointController extends Controller
     {
         return [
             'id'           => $p->id,
+            'user_id'      => $p->user_id,
             'name'         => $p->name,
             'lat'          => (float) $p->lat,
             'lng'          => (float) $p->lng,
@@ -126,14 +162,28 @@ class CapteurPointController extends Controller
             'std_dev'      => $p->std_dev !== null ? (float) $p->std_dev : null,
             'temoin_name'  => $p->capteurTemoin?->name,
             'temoin_id'    => $p->capteur_temoin_id,
-            'user_name'    => $p->user ? "{$p->user->firstname} {$p->user->name}" : '—',
-            'mesures_count' => $p->mesures ? $p->mesures->count() : 0,
+            'user_name'      => $p->user
+                ? "{$p->user->firstname} {$p->user->name}"
+                : ($p->participant ? $p->participant->pseudo : '—'),
+            'mesures_count'  => $p->mesures ? $p->mesures->count() : 0,
+            'session_id'     => $p->session_id,
+            'participant_id' => $p->participant_id,
         ];
     }
 
     private function authorize(CapteurPoint $point): void
     {
-        abort_if($point->user_id !== (int) Auth::id(), 403);
+        if (Auth::check() && Auth::user()->isAdmin()) {
+            return;
+        }
+
+        $userId      = Auth::id();
+        $participant = session('participant');
+
+        $isOwner = ($userId && $point->user_id === (int) $userId)
+            || ($participant && $point->participant_id === $participant['id']);
+
+        abort_unless($isOwner, 403);
     }
 
     private function saveMesures(CapteurPoint $point, array $mesures): void

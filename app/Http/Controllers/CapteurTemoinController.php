@@ -7,13 +7,24 @@ use App\Models\CapteurTemoinMesure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use OpenApi\Attributes as OA;
 
 class CapteurTemoinController extends Controller
 {
+    #[OA\Get(
+        path: '/api/capteur-temoins',
+        operationId: 'getCapteurTemoins',
+        tags: ['Témoins'],
+        summary: 'Obtenir la liste des capteurs témoins',
+        description: 'Retourne tous les capteurs témoins enregistrés dans la base.',
+        responses: [
+            new OA\Response(response: 200, description: 'Opération réussie'),
+        ]
+    )]
     public function index()
     {
         $query = Auth::check()
-            ? CapteurTemoin::with('mesures')->where('user_id', Auth::id())
+            ? CapteurTemoin::with('mesures')
             : CapteurTemoin::withCount('mesures');
 
         $temoins = $query->get()->map(fn ($t) => [
@@ -54,6 +65,26 @@ class CapteurTemoinController extends Controller
         ], 201);
     }
 
+    #[OA\Get(
+        path: '/api/capteur-temoins/{capteurTemoin}/mesures',
+        operationId: 'getCapteurTemoinMesures',
+        tags: ['Témoins'],
+        summary: 'Obtenir les mesures d\'un capteur témoin',
+        description: 'Retourne le détail d\'un capteur témoin et l\'historique de ses mesures.',
+        parameters: [
+            new OA\Parameter(
+                name: 'capteurTemoin',
+                description: 'Identifiant du capteur témoin',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'integer')
+            ),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Opération réussie'),
+            new OA\Response(response: 404, description: 'Capteur témoin introuvable'),
+        ]
+    )]
     public function show(CapteurTemoin $capteurTemoin)
     {
         // Lecture publique — autorisation non requise pour consulter les mesures
@@ -100,6 +131,30 @@ class CapteurTemoinController extends Controller
         return response()->json(['ok' => true]);
     }
 
+    #[OA\Get(
+        path: '/api/capteur-temoins/{capteurTemoin}/export',
+        operationId: 'exportCapteurTemoin',
+        tags: ['Témoins'],
+        summary: 'Exporter les mesures d\'un capteur témoin (XLSX)',
+        description: 'Télécharge un classeur Excel (.xlsx) contenant les mesures du capteur témoin, exploitable notamment dans QGIS via une jointure sur les coordonnées.',
+        parameters: [
+            new OA\Parameter(
+                name: 'capteurTemoin',
+                description: 'Identifiant du capteur témoin',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'integer')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Fichier XLSX généré',
+                content: new OA\MediaType(mediaType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+            ),
+            new OA\Response(response: 403, description: 'Accès non autorisé'),
+        ]
+    )]
     public function export(CapteurTemoin $capteurTemoin)
     {
         $this->authorize($capteurTemoin);
@@ -161,6 +216,10 @@ XML;
 
     private function authorize(CapteurTemoin $temoin): void
     {
+        if (Auth::check() && Auth::user()->isAdmin()) {
+            return;
+        }
+
         abort_if($temoin->user_id !== Auth::id(), 403);
     }
 

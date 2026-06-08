@@ -1,5 +1,15 @@
 const CSRF = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
 
+function isOwner(point) {
+    const userId      = parseInt(document.body.dataset.userId || '0');
+    const pJson       = document.body.dataset.participantJson;
+    const participant = pJson ? JSON.parse(pJson) : null;
+
+    if (userId && point.user_id && point.user_id === userId) return true;
+    if (participant?.id && point.participant_id && point.participant_id === participant.id) return true;
+    return false;
+}
+
 /* ══════════════════ State ══════════════════ */
 let pendingPoint    = null;   // { latlng, popup }
 let editingPoint    = null;
@@ -69,11 +79,17 @@ window.openPointModal = function (point = null) {
     const modal = document.getElementById('modal-point');
     if (!modal) return;
 
-    const isAuth = document.body.dataset.auth === '1';
+    const isAuth  = document.body.dataset.auth === '1';
+    const isAdmin = document.body.dataset.admin === '1';
 
-    document.getElementById('point-name').value       = point?.name ?? '';
-    document.getElementById('point-file-input').value = '';
-    document.getElementById('modal-point-title').textContent = point ? 'Détail du point de mesure' : 'Nouveau point de mesure';
+    const nameInput = document.getElementById('point-name');
+    if (nameInput) nameInput.value = point?.name ?? '';
+
+    const fileInput = document.getElementById('point-file-input');
+    if (fileInput) fileInput.value = '';
+
+    const titleEl = document.getElementById('modal-point-title');
+    if (titleEl) titleEl.textContent = point ? 'Détail du point de mesure' : 'Nouveau point de mesure';
 
     ['point-alerts-section','point-chart-temp-section','point-icu-section'].forEach((id) => {
         document.getElementById(id)?.classList.add('hidden');
@@ -81,19 +97,18 @@ window.openPointModal = function (point = null) {
 
     const deleteBtn    = document.getElementById('point-delete-btn');
     const saveBtn      = document.getElementById('point-save-btn');
-    const nameInput    = document.getElementById('point-name');
     const temoinSelect = document.getElementById('point-temoin-select');
     const fileSection  = document.getElementById('point-file-section');
-    const recalcBtn    = document.getElementById('btn-recalculate');
 
-    if (!isAuth) {
+    const canEdit = isAuth && (!point || isOwner(point) || isAdmin);
+
+    if (!canEdit) {
         if (deleteBtn) deleteBtn.classList.replace('flex', 'hidden');
-        if (saveBtn) saveBtn.classList.add('hidden');
+        if (saveBtn)   saveBtn.classList.add('hidden');
         if (nameInput) nameInput.disabled = true;
         if (temoinSelect) temoinSelect.disabled = true;
         if (fileSection) fileSection.classList.add('hidden');
         document.getElementById('point-alerts-section')?.classList.add('hidden');
-        if (recalcBtn) recalcBtn.classList.add('hidden');
     } else {
         if (deleteBtn) {
             deleteBtn.classList.toggle('hidden', !point);
@@ -107,15 +122,15 @@ window.openPointModal = function (point = null) {
         if (nameInput) nameInput.disabled = false;
         if (temoinSelect) temoinSelect.disabled = false;
         if (fileSection) fileSection.classList.remove('hidden');
-        if (recalcBtn) recalcBtn.classList.remove('hidden');
     }
 
     modal.classList.remove('hidden');
     modal.classList.add('flex');
 
     loadTemoins().then(() => {
-        if (point?.temoin_id) {
-            document.getElementById('point-temoin-select').value = point.temoin_id;
+        const selectEl = document.getElementById('point-temoin-select');
+        if (point?.temoin_id && selectEl) {
+            selectEl.value = point.temoin_id;
         }
         if (point) loadPointDetail(point.id);
     });
@@ -247,9 +262,7 @@ function renderFlaggedTable(flagged) {
         const reason   = [humFlag && 'Hum. > 95%', diffFlag && 'Écart temp > 3°C'].filter(Boolean).join(', ');
         const tr       = document.createElement('tr');
         tr.className   = 'hover:bg-slate-50';
-        const checked  = !excludedIdx.has(m._idx);
         tr.innerHTML = `
-            <td class="px-3 py-2"><input type="checkbox" class="flag-check accent-teal-600 cursor-pointer" data-idx="${m._idx}" ${checked ? 'checked' : ''}></td>
             <td class="px-3 py-2 text-slate-700 whitespace-nowrap">${m.enregistre_le}</td>
             <td class="px-3 py-2 text-right text-red-600 font-medium">${m.sht_temp}</td>
             <td class="px-3 py-2 text-right text-amber-600 font-medium">${m.sht_hum}</td>
@@ -527,7 +540,7 @@ function renderICUSummary(result) {
     } else {
         rel.classList.add('bg-red-50', 'border-red-200', 'text-red-800');
         document.getElementById('icu-rel-icon').innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>';
-        document.getElementById('icu-rel-text').textContent = `Vérification manuelle recommandée — écart-type de ${result.globalStd} °C (> 0,5 °C). Contrôlez les mesures suspectes ci-dessus.`;
+        document.getElementById('icu-rel-text').textContent = `Vérification manuelle recommandée — écart-type de ${result.globalStd} °C (> 0,5 °C).`;
     }
 }
 
@@ -769,6 +782,8 @@ function pointPopupContent(p) {
         `;
     }
 
+    const owner = isOwner(p);
+
     return `
         <div style="min-width:180px;font-family:'Space Grotesk',sans-serif">
             <p style="font-size:13px;font-weight:700;color:#0f172a;margin:0 0 2px">🌡 ${p.name}</p>
@@ -777,8 +792,8 @@ function pointPopupContent(p) {
             <p style="font-size:16px;font-weight:900;color:${color};margin:0 0 4px">ICU : ${icu}</p>
             ${warningHtml}
             <button onclick="window.openPointModal(JSON.parse(this.dataset.p))" data-p="${data}"
-                style="width:100%;padding:6px 0;font-size:12px;font-weight:600;color:#fff;background:#0f172a;border:none;border-radius:8px;cursor:pointer">
-                Détail
+                style="flex:1;padding:6px 0;font-size:12px;font-weight:600;color:#fff;background:#0f172a;border:none;border-radius:8px;cursor:pointer;width:100%">
+                ${owner ? 'Modifier' : 'Détail'}
             </button>
         </div>`;
 }
@@ -843,15 +858,6 @@ document.addEventListener('DOMContentLoaded', () => {
             temoinMesures = [];
         }
         showTemoinStatus(temoinMesures.length);
-        await runAnalysis();
-    });
-
-    document.getElementById('btn-recalculate')?.addEventListener('click', async () => {
-        excludedIdx = new Set();
-        document.querySelectorAll('.flag-check').forEach((cb) => {
-            if (!cb.checked) excludedIdx.add(parseInt(cb.dataset.idx));
-        });
-        if (chartIcu) { chartIcu.destroy(); chartIcu = null; }
         await runAnalysis();
     });
 

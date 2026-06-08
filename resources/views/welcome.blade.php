@@ -13,7 +13,11 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     @endif
 </head>
-<body class="h-screen w-screen overflow-hidden bg-slate-50 text-slate-800 antialiased flex flex-col" data-auth="{{ auth()->check() ? '1' : '0' }}">
+<body class="h-screen w-screen overflow-hidden bg-slate-50 text-slate-800 antialiased flex flex-col" data-auth="{{ (auth()->check() || session()->has('participant')) ? '1' : '0' }}"
+    data-participant="{{ session('participant') ? '1' : '0' }}"
+    data-participant-json="{{ session('participant') ? json_encode(session('participant')) : '' }}"
+    data-user-id="{{ auth()->id() ?? '' }}"
+    data-admin="{{ (auth()->check() && auth()->user()->isAdmin()) ? '1' : '0' }}">
 
     <x-app-header />
 
@@ -32,7 +36,7 @@
                 <svg class="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.243-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
             </button>
 
-            @auth
+            @if(auth()->check() || session()->has('participant'))
             {{-- Bannière mode placement --}}
             <div id="placement-banner" class="hidden absolute top-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3 bg-slate-900 text-white text-sm font-medium px-5 py-3 rounded-2xl shadow-xl">
                 <span id="placement-cursor-icon" class="w-3 h-3 rounded-full bg-white shrink-0 ring-2 ring-white/30 animate-pulse"></span>
@@ -126,7 +130,7 @@
                 </div>
 
             </div>
-            @endauth
+            @endif
 
         </main>
     </div>
@@ -162,13 +166,13 @@
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">Nom du point</label>
                             <input id="point-name" type="text" placeholder="Ex : Place du Capitole"
                                 class="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:border-teal-500 focus:ring-2 focus:ring-teal-100 outline-none transition-all placeholder:text-slate-300"
-                                @guest readonly @endguest>
+                                @if(!auth()->check() && !session()->has('participant')) readonly @endif>
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">Capteur témoin associé</label>
                             <select id="point-temoin-select"
                                 class="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:border-teal-500 focus:ring-2 focus:ring-teal-100 outline-none transition-all"
-                                @guest disabled @endguest>
+                                @if(!auth()->check() && !session()->has('participant')) disabled @endif>
                                 <option value="">— Sélectionner —</option>
                             </select>
                         </div>
@@ -203,7 +207,6 @@
                             <table class="w-full text-xs">
                                 <thead class="sticky top-0 bg-slate-50 border-b border-slate-100">
                                     <tr>
-                                        <th class="px-3 py-2 text-left font-semibold text-slate-500 uppercase text-[10px]">Inclure</th>
                                         <th class="px-3 py-2 text-left font-semibold text-slate-500 uppercase text-[10px]">Date / Heure</th>
                                         <th class="px-3 py-2 text-right font-semibold text-slate-500 uppercase text-[10px]">SHT Temp</th>
                                         <th class="px-3 py-2 text-right font-semibold text-slate-500 uppercase text-[10px]">Humidité</th>
@@ -214,9 +217,6 @@
                                 <tbody id="flagged-tbody" class="divide-y divide-slate-50"></tbody>
                             </table>
                         </div>
-                        <button id="btn-recalculate" class="mt-2 text-xs font-semibold text-teal-600 hover:text-teal-500 underline">
-                            Recalculer avec les sélections
-                        </button>
                     </div>
                 </section>
 
@@ -283,7 +283,7 @@
 
             {{-- Footer fixed --}}
             <div class="px-6 py-4 border-t border-slate-100 flex items-center justify-between shrink-0">
-                @auth
+                @if(auth()->check() || session()->has('participant'))
                 <button id="point-delete-btn" class="hidden flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition-colors">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                     Supprimer
@@ -292,16 +292,16 @@
                     <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
                     <span id="point-progress-text">Analyse en cours…</span>
                 </div>
-                @endauth
+                @endif
                 <div class="flex items-center gap-3 ml-auto">
                     <button onclick="window.closePointModal()" class="px-4 py-2 text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors">
                         Fermer
                     </button>
-                    @auth
+                    @if(auth()->check() || session()->has('participant'))
                     <button id="point-save-btn" class="px-5 py-2 text-sm font-semibold text-white bg-slate-900 hover:bg-teal-600 rounded-xl transition-all active:scale-95" disabled>
                         Valider
                     </button>
-                    @endauth
+                    @endif
                 </div>
             </div>
 

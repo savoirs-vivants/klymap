@@ -48,12 +48,21 @@ class ParticipantController extends Controller
         ]);
 
         $campagne = Campagne::findOrFail($request->campagne_id);
+        $pseudo   = trim($request->pseudo);
 
-        $participant = SessionParticipant::create([
-            'id_session' => $campagne->id,
-            'pseudo'     => trim($request->pseudo),
-            'id_groupe'  => $request->id_groupe,
-        ]);
+        $participant = SessionParticipant::where('id_session', $campagne->id)
+            ->whereRaw('LOWER(pseudo) = ?', [mb_strtolower($pseudo)])
+            ->first();
+
+        if ($participant) {
+            $participant->update(['id_groupe' => $request->id_groupe]);
+        } else {
+            $participant = SessionParticipant::create([
+                'id_session' => $campagne->id,
+                'pseudo'     => $pseudo,
+                'id_groupe'  => $request->id_groupe,
+            ]);
+        }
 
         session([
             'participant' => [
@@ -66,7 +75,7 @@ class ParticipantController extends Controller
             ],
         ]);
 
-        return response()->json(['redirect' => route('participant.analyses')]);
+        return response()->json(['redirect' => route('home')]);
     }
 
     public function logout()
