@@ -8,6 +8,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\CampagneController;
+use App\Http\Controllers\DonneesCampagnesController;
 use App\Http\Controllers\ParticipantController;
 use App\Http\Controllers\ProfilController;
 use Illuminate\Support\Facades\Route;
@@ -27,11 +28,13 @@ Route::middleware('guest')->group(function () {
     Route::get('/reinitialiser/{token}', [ResetPasswordController::class, 'show'])->name('password.reset');
     Route::post('/reinitialiser', [ResetPasswordController::class, 'store'])->name('password.update');
 
-    Route::get('/code',               [ParticipantController::class, 'showJoin'])->name('participant.join');
-    Route::post('/code/valider',      [ParticipantController::class, 'validateCode'])->name('participant.validateCode');
-    Route::post('/session/rejoindre', [ParticipantController::class, 'register'])->name('participant.register');
-    Route::post('/session/quitter',   [ParticipantController::class, 'logout'])->name('participant.logout');
 });
+
+// Routes participant : accessibles même en étant connecté
+Route::get('/code',               [ParticipantController::class, 'showJoin'])->name('participant.join');
+Route::post('/code/valider',      [ParticipantController::class, 'validateCode'])->name('participant.validateCode');
+Route::post('/session/rejoindre', [ParticipantController::class, 'register'])->name('participant.register');
+Route::post('/session/quitter',   [ParticipantController::class, 'logout'])->name('participant.logout');
 
 Route::prefix('api')->name('api.')->group(function () {
     Route::get('/capteur-temoins', [CapteurTemoinController::class, 'index'])->name('temoins.index');
@@ -51,12 +54,10 @@ Route::middleware('auth')->group(function () {
         Route::put('/capteur-temoins/{capteurTemoin}', [CapteurTemoinController::class, 'update'])->name('temoins.update');
         Route::delete('/capteur-temoins/{capteurTemoin}', [CapteurTemoinController::class, 'destroy'])->name('temoins.destroy');
 
-        Route::post('/capteur-points', [CapteurPointController::class, 'store'])->name('points.store');
-        Route::put('/capteur-points/{capteurPoint}', [CapteurPointController::class, 'update'])->name('points.update');
-        Route::delete('/capteur-points/{capteurPoint}', [CapteurPointController::class, 'destroy'])->name('points.destroy');
     });
 
     Route::get('/campagnes',                      [CampagneController::class, 'index'])->name('campagnes.index');
+    // Accessible aussi aux participants via middleware séparé
     Route::post('/campagne',                      [CampagneController::class, 'store'])->name('campagne.store');
     Route::put('/campagnes/{campagne}',           [CampagneController::class, 'update'])->name('campagne.update');
     Route::get('/campagnes/{campagne}/participants', [CampagneController::class, 'participants'])->name('campagne.participants');
@@ -74,4 +75,14 @@ Route::middleware(['auth', 'admin'])->prefix('backoffice')->name('backoffice.')-
     Route::post('/utilisateurs', [BackofficeController::class, 'store'])->name('users.store');
     Route::put('/utilisateurs/{user}', [BackofficeController::class, 'update'])->name('users.update');
     Route::delete('/utilisateurs/{user}', [BackofficeController::class, 'destroy'])->name('users.destroy');
+});
+
+Route::middleware('auth.participant')->group(function () {
+    Route::get('/donnees-campagnes', [DonneesCampagnesController::class, 'index'])->name('donnees-campagnes.index');
+
+    Route::prefix('api')->name('api.participant.')->group(function () {
+        Route::post('/capteur-points', [CapteurPointController::class, 'store'])->name('points.store');
+        Route::put('/capteur-points/{capteurPoint}', [CapteurPointController::class, 'update'])->name('points.update');
+        Route::delete('/capteur-points/{capteurPoint}', [CapteurPointController::class, 'destroy'])->name('points.destroy');
+    });
 });

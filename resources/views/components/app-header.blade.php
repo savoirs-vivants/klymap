@@ -10,9 +10,6 @@
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"/></svg>
         </button>
 
-        <div class="w-8 h-8 bg-teal-400 rounded-lg flex items-center justify-center shadow-inner shrink-0">
-            <svg class="w-5 h-5 text-teal-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-        </div>
         <span class="font-mono text-xl font-bold tracking-tight text-black">Klymap</span>
     </div>
 
@@ -110,6 +107,25 @@
                         </button>
                     </form>
                 </div>
+            </div>
+        @elseif(session()->has('participant'))
+            {{-- Session participant --}}
+            <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 px-3 py-1.5 bg-teal-50 border border-teal-200 rounded-full text-sm text-teal-700 font-medium">
+                    <div class="w-5 h-5 rounded-full bg-teal-500 flex items-center justify-center text-white text-[10px] font-bold shrink-0">
+                        {{ strtoupper(substr(session('participant.pseudo'), 0, 1)) }}
+                    </div>
+                    <span class="max-md:hidden">{{ session('participant.pseudo') }}</span>
+                    @if(session('participant.id_groupe') > 0)
+                        <span class="max-md:hidden text-teal-500">· Groupe {{ chr(64 + session('participant.id_groupe')) }}</span>
+                    @endif
+                </div>
+                <form method="POST" action="{{ route('participant.logout') }}">
+                    @csrf
+                    <button type="submit" class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Quitter la session">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7"/></svg>
+                    </button>
+                </form>
             </div>
         @else
             <a href="{{ route('login') }}" class="flex items-center gap-1.5 px-3 py-2 bg-teal-600 hover:bg-teal-500 text-white text-sm font-semibold rounded-lg transition-all shadow active:scale-95">

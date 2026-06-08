@@ -74,7 +74,7 @@
                 </div>
             </div>
 
-            @auth
+            @if(auth()->check() || session()->has("participant"))
                 <div class="mt-2 flex items-start gap-2.5 px-3 py-3 rounded-xl bg-teal-900/30 border border-teal-700/50">
                     <svg class="w-4 h-4 text-teal-400 shrink-0 mt-0.5" fill="none" stroke="currentColor"
                         viewBox="0 0 24 24">
@@ -84,10 +84,10 @@
                     <p class="text-[11px] text-teal-200/80 leading-relaxed">Cliquez sur la carte pour placer un <strong
                             class="text-teal-100">point de mesure</strong> et calculer l'ICU.</p>
                 </div>
-            @endauth
+            @endif
         </div>
 
-        @auth
+        @if(auth()->check() || session()->has('participant'))
             <div>
                 <h2 class="text-xs font-bold uppercase tracking-wider text-teal-300 mb-3">Navigation</h2>
                 <nav class="flex flex-col gap-1.5">
@@ -123,7 +123,7 @@
                         Données campagnes
                     </a>
 
-                    @if (auth()->user()->isAdmin())
+                    @if (auth()->check() && auth()->user()->isAdmin())
                         <a href="{{ route('backoffice.users') }}"
                             class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('backoffice.*') ? 'bg-teal-700 text-white shadow-sm' : 'text-teal-100 hover:bg-teal-700/50 hover:text-white' }}">
                             <svg class="w-4 h-4 {{ request()->routeIs('backoffice.*') ? 'text-teal-300' : 'text-teal-400/70' }} shrink-0"
@@ -138,7 +138,7 @@
                     @endif
                 </nav>
             </div>
-        @endauth
+        @endif
 
     </div>
 </aside>
