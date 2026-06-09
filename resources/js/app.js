@@ -7,3 +7,5 @@ import './capteurs.js';
 import './campagnes-gestion.js';
 import './campagne.js';
 import './join-session.js';
+import './capteur-chart.js';
+import './bluetooth.js';
