@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Backoffice\UserRequest;
+use App\Mail\CompteCreeMail;
 use App\Models\User;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 
 class BackofficeController extends Controller
 {
@@ -26,7 +28,11 @@ class BackofficeController extends Controller
             'role'      => $request->role,
         ]);
 
-        return back()->with('success', 'Utilisateur créé avec succès.');
+        Mail::to($request->email)->send(
+            new CompteCreeMail($request->firstname, $request->email, $request->password)
+        );
+
+        return back()->with('success', 'Utilisateur créé et e-mail envoyé.');
     }
 
     public function update(UserRequest $request, User $user)
