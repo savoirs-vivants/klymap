@@ -38,7 +38,7 @@
             <div class="relative w-full h-[calc(100vh-64px)]">
                 <div id="map" class="w-full h-full z-0"></div>
                 {{-- Barre de recherche de ville --}}
-                <div class="absolute top-4 left-4 z-[1000]">
+                <div class="absolute top-4 left-4 z-[10]">
                     <div class="relative flex flex-col">
                         <div class="relative flex items-center">
                             <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-teal-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -52,7 +52,7 @@
                     </div>
                 </div>
 
-                <div class="absolute bottom-6 left-6 z-[1000] flex items-center gap-3">
+                <div class="absolute bottom-6 left-6 z-[10] flex items-center gap-3">
                     <button id="btn-geolocate"
                         class="flex items-center justify-center w-12 h-12 bg-white text-gray-700 rounded-full shadow-lg hover:bg-gray-50 transition-colors">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
