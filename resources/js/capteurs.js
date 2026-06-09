@@ -33,6 +33,11 @@ window.activatePlacementMode = function (type) {
     banner.classList.remove('hidden');
     banner.classList.add('flex');
 
+    const msg = document.getElementById('placement-message');
+    if (msg) msg.textContent = type === 'capteur'
+        ? 'Cliquez sur la carte pour placer le capteur'
+        : 'Cliquez sur la carte pour placer le capteur témoin';
+
     if (window._klymapInstance) {
         window._klymapInstance.getContainer().style.cursor = 'crosshair';
     }
@@ -354,6 +359,16 @@ document.addEventListener('klymap:ready', () => {
                 window._klymapInstance.getContainer().style.cursor = '';
             }
             window.openTemoinOverlay(null);
+        } else if (placementMode === 'capteur') {
+            const banner = document.getElementById('placement-banner');
+            banner?.classList.add('hidden');
+            banner?.classList.remove('flex');
+            placementMode = null;
+            window._placementMode = null;
+            if (window._klymapInstance) {
+                window._klymapInstance.getContainer().style.cursor = '';
+            }
+            window.openCapteurLocateModal(e.latlng.lat, e.latlng.lng);
         }
     });
 });
