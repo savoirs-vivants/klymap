@@ -77,6 +77,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/capteurs', [CapteurController::class, 'store'])->name('capteurs.store');
     Route::post('/capteurs/bluetooth/sync', [CapteurController::class, 'syncBluetooth'])->name('capteurs.bluetooth.sync');
     Route::get('/capteurs/{id}/export', [CapteurController::class, 'export'])->name('capteurs.export');
+    Route::post('/api/capteurs/locate', [CapteurController::class, 'locateByDevEui'])->name('capteurs.locate');
 });
 
 Route::middleware(['auth', 'admin'])->prefix('backoffice')->name('backoffice.')->group(function () {

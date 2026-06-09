@@ -111,6 +111,40 @@ class CapteurController extends Controller
         return redirect()->route('home')->with('success', 'Le capteur a été localisé avec succès !');
     }
 
+    public function locateByDevEui(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $data = $request->validate([
+            'DevEui' => ['required', 'string'],
+            'lat'    => ['required', 'numeric'],
+            'long'   => ['required', 'numeric'],
+        ]);
+
+        $capteur = Capteur::where('DevEui', $data['DevEui'])->first();
+
+        if (! $capteur) {
+            return response()->json(['error' => 'Aucun capteur trouvé avec ce DevEui.'], 404);
+        }
+
+        $capteur->update(['lat' => $data['lat'], 'long' => $data['long']]);
+        $capteur->load('latestMesure');
+
+        return response()->json([
+            'id'             => $capteur->id,
+            'uid'            => $capteur->UID,
+            'deveui'         => $capteur->DevEui,
+            'lat'            => (float) $capteur->lat,
+            'lng'            => (float) $capteur->long,
+            'temp'           => $capteur->latestMesure?->temp,
+            'hum'            => $capteur->latestMesure?->hum,
+            'vitesse_vent'   => $capteur->latestMesure?->vitesse_vent,
+            'direction_vent' => $capteur->latestMesure?->direction_vent,
+            'press_baro'     => $capteur->latestMesure?->press_baro,
+            'pluie'          => $capteur->latestMesure?->pluie,
+            'updated_at'     => $capteur->latestMesure?->created_at?->diffForHumans(),
+            'show_url'       => route('capteurs.show', $capteur->id),
+        ]);
+    }
+
     public function syncBluetooth(Request $request)
     {
         $request->validate([
