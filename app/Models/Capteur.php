@@ -13,6 +13,7 @@ class Capteur extends Model
 
     protected $fillable = [
         'UID',
+        'DevEui',
         'lat',
         'long',
         'temp',
