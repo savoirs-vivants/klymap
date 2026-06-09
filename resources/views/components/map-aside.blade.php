@@ -131,6 +131,16 @@
                         Stations météo
                     </a>
 
+                    <a href="{{ route('comparaison-icu') }}"
+                        class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('comparaison-icu') ? 'bg-teal-700 text-white shadow-sm' : 'text-teal-100 hover:bg-teal-700/50 hover:text-white' }}">
+                        <svg class="w-4 h-4 {{ request()->routeIs('comparaison-icu') ? 'text-teal-300' : 'text-teal-400/70' }} shrink-0"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                        Comparaison ICU
+                    </a>
+
                     <a href="/donnees-campagnes"
                         class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->is('donnees-campagnes*') ? 'bg-teal-700 text-white shadow-sm' : 'text-teal-100 hover:bg-teal-700/50 hover:text-white' }}">
                         <svg class="w-4 h-4 {{ request()->is('donnees-campagnes*') ? 'text-teal-300' : 'text-teal-400/70' }} shrink-0"

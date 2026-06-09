@@ -50,6 +50,7 @@ Route::prefix('api')->name('api.')->group(function () {
 
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', fn() => view('welcome'))->name('dashboard');
+    Route::get('/comparaison-icu', fn() => view('comparaison-icu'))->name('comparaison-icu');
     Route::post('/deconnexion', [LoginController::class, 'destroy'])->name('logout');
 
     Route::prefix('api')->name('api.')->group(function () {
