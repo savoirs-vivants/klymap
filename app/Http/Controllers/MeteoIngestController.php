@@ -1,0 +1,75 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Capteur;
+use App\Models\Mesure;
+use Illuminate\Http\Request;
+
+class MeteoIngestController extends Controller
+{
+    public function store(Request $request)
+    {
+        // Authentification par Bearer token
+        $token = $request->bearerToken();
+        if (!$token || $token !== env('RASPBERRY_API_SECRET')) {
+            return response()->json(['error' => 'Non autorisé'], 401);
+        }
+
+        $data = $request->validate([
+            'deveui'         => ['required', 'string'],
+            'lat'            => ['nullable', 'numeric'],
+            'long'           => ['nullable', 'numeric'],
+            'temp'           => ['nullable', 'numeric'],
+            'hum'            => ['nullable', 'numeric'],
+            'vitesse_vent'   => ['nullable', 'numeric'],
+            'direction_vent' => ['nullable', 'string'],
+            'press_baro'     => ['nullable', 'numeric'],
+            'pluie'          => ['nullable', 'numeric'],
+            'timestamp'      => ['nullable', 'date'],
+        ]);
+
+        // Trouver ou créer le capteur via DevEui
+        $capteur = Capteur::firstOrCreate(
+            ['DevEui' => $data['deveui']],
+            ['lat' => $data['lat'] ?? null, 'long' => $data['long'] ?? null]
+        );
+
+        // Mettre à jour les dernières valeurs sur le capteur
+        $capteur->update([
+            'lat'            => $data['lat']            ?? $capteur->lat,
+            'long'           => $data['long']           ?? $capteur->long,
+            'temp'           => $data['temp']           ?? $capteur->temp,
+            'hum'            => $data['hum']            ?? $capteur->hum,
+            'vitesse_vent'   => $data['vitesse_vent']   ?? $capteur->vitesse_vent,
+            'direction_vent' => $data['direction_vent'] ?? $capteur->direction_vent,
+            'press_baro'     => $data['press_baro']     ?? $capteur->press_baro,
+            'pluie'          => $data['pluie']          ?? $capteur->pluie,
+        ]);
+
+        // Enregistrer la mesure horodatée
+        $mesure = new Mesure([
+            'capteur_id'     => $capteur->id,
+            'temp'           => $data['temp']           ?? null,
+            'hum'            => $data['hum']            ?? null,
+            'vitesse_vent'   => $data['vitesse_vent']   ?? null,
+            'direction_vent' => $data['direction_vent'] ?? null,
+            'press_baro'     => $data['press_baro']     ?? null,
+            'pluie'          => $data['pluie']          ?? null,
+        ]);
+
+        // Utiliser le timestamp envoyé par la Raspberry si présent
+        if (!empty($data['timestamp'])) {
+            $mesure->created_at = $data['timestamp'];
+            $mesure->updated_at = $data['timestamp'];
+        }
+
+        $mesure->save();
+
+        return response()->json([
+            'ok'         => true,
+            'capteur_id' => $capteur->id,
+            'mesure_id'  => $mesure->id,
+        ], 201);
+    }
+}
