@@ -42,7 +42,7 @@
                 </div>
             </div>
             <p>Nous vous recommandons de modifier votre mot de passe après votre première connexion.</p>
-            <a href="{{ config('app.url') }}/connexion" class="btn">Se connecter</a>
+            <a href="{{ config('app.url') }}connexion" class="btn">Se connecter</a>
         </div>
         <div class="footer">
             <p>Cet e-mail a été envoyé automatiquement, merci de ne pas y répondre.</p>
