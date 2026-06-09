@@ -1,5 +1,18 @@
 const CSRF = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
 
+function openLightbox(src) {
+    const lb  = document.getElementById('img-lightbox');
+    const img = document.getElementById('img-lightbox-src');
+    if (!lb || !img || !src) return;
+    img.src = src;
+    lb.classList.remove('hidden');
+}
+
+// Fermeture lightbox avec Échap
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') document.getElementById('img-lightbox')?.classList.add('hidden');
+});
+
 function isOwner(point) {
     const userId      = parseInt(document.body.dataset.userId || '0');
     const pJson       = document.body.dataset.participantJson;
@@ -20,6 +33,7 @@ let icuResult       = null;
 let chartTemp       = null;
 let chartIcu        = null;
 let pointsOnMap     = {};
+let nightOverrides  = [];   // [{ night: 'YYYY-MM-DD', pAvg, tAvg }] — corrections manuelles des nuits ICU
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -70,11 +84,12 @@ window.confirmPointPosition = function () {
 
 /* ══════════════════ Modal open / close ══════════════════ */
 window.openPointModal = function (point = null) {
-    editingPoint  = point;
-    pointMesures  = [];
-    temoinMesures = [];
-    excludedIdx   = new Set();
-    icuResult     = null;
+    editingPoint   = point;
+    pointMesures   = [];
+    temoinMesures  = [];
+    excludedIdx    = new Set();
+    icuResult      = null;
+    nightOverrides = [];
 
     const modal = document.getElementById('modal-point');
     if (!modal) return;
@@ -84,6 +99,48 @@ window.openPointModal = function (point = null) {
 
     const nameInput = document.getElementById('point-name');
     if (nameInput) nameInput.value = point?.name ?? '';
+
+    const dateInput = document.getElementById('point-date');
+    if (dateInput) dateInput.value = point?.date ?? '';
+
+    // Image preview (zone upload + miniature dans l'en-tête)
+    const imgPreview = document.getElementById('point-image-preview');
+    const imgThumb   = document.getElementById('modal-point-image-thumb');
+    const imgCta     = document.getElementById('point-image-cta');
+    if (point?.image_url) {
+        if (imgPreview) { imgPreview.src = point.image_url; imgPreview.classList.remove('hidden'); }
+        if (imgThumb)   { imgThumb.src   = point.image_url; imgThumb.classList.remove('hidden'); }
+        if (imgCta) imgCta.textContent = 'Changer la photo';
+    } else {
+        if (imgPreview) { imgPreview.src = ''; imgPreview.classList.add('hidden'); }
+        if (imgThumb)   { imgThumb.src   = ''; imgThumb.classList.add('hidden'); }
+        if (imgCta) imgCta.textContent = 'Ajouter une photo';
+    }
+
+    // Rendre les images cliquables → lightbox
+    [imgPreview, imgThumb].forEach((el) => {
+        if (!el) return;
+        el.style.cursor = 'zoom-in';
+        el.onclick = () => openLightbox(el.src);
+    });
+
+    // Synchroniser le thumb header quand l'utilisateur choisit une nouvelle image
+    const imgInput = document.getElementById('point-image-input');
+    if (imgInput) {
+        imgInput.addEventListener('change', () => {
+            const file = imgInput.files[0];
+            if (!file) return;
+            const r = new FileReader();
+            r.onload = (e) => {
+                if (imgThumb) {
+                    imgThumb.src = e.target.result;
+                    imgThumb.classList.remove('hidden');
+                    imgThumb.onclick = () => openLightbox(imgThumb.src);
+                }
+            };
+            r.readAsDataURL(file);
+        }, { once: true });
+    }
 
     const fileInput = document.getElementById('point-file-input');
     if (fileInput) fileInput.value = '';
@@ -102,12 +159,18 @@ window.openPointModal = function (point = null) {
 
     const canEdit = isAuth && (!point || isOwner(point) || isAdmin);
 
+    const dateInput2  = document.getElementById('point-date');
+    const imageSection = document.getElementById('point-image-section');
+    const imageInput   = document.getElementById('point-image-input');
+
     if (!canEdit) {
         if (deleteBtn) deleteBtn.classList.replace('flex', 'hidden');
         if (saveBtn)   saveBtn.classList.add('hidden');
         if (nameInput) nameInput.disabled = true;
+        if (dateInput2) dateInput2.disabled = true;
         if (temoinSelect) temoinSelect.disabled = true;
         if (fileSection) fileSection.classList.add('hidden');
+        if (imageSection) imageSection.classList.add('hidden');
         document.getElementById('point-alerts-section')?.classList.add('hidden');
     } else {
         if (deleteBtn) {
@@ -120,8 +183,44 @@ window.openPointModal = function (point = null) {
             saveBtn.textContent = point ? 'Mettre à jour' : 'Valider';
         }
         if (nameInput) nameInput.disabled = false;
+        if (dateInput2) dateInput2.disabled = false;
         if (temoinSelect) temoinSelect.disabled = false;
         if (fileSection) fileSection.classList.remove('hidden');
+        if (imageSection) imageSection.classList.remove('hidden');
+
+        // Prévisualisation locale + upload si point existant
+        if (imageInput && !imageInput._listenerAdded) {
+            imageInput._listenerAdded = true;
+            imageInput.addEventListener('change', async () => {
+                const file = imageInput.files[0];
+                if (!file) return;
+
+                // Prévisualisation locale immédiate (fonctionne aussi pour un nouveau point)
+                const prev = document.getElementById('point-image-preview');
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    if (prev) { prev.src = e.target.result; prev.classList.remove('hidden'); }
+                    const cta = document.getElementById('point-image-cta');
+                    if (cta) cta.textContent = 'Changer la photo';
+                };
+                reader.readAsDataURL(file);
+
+                // Upload serveur uniquement si le point existe déjà en BDD
+                if (!editingPoint) return;
+                const fd = new FormData();
+                fd.append('image', file);
+                try {
+                    const r = await fetch(`/api/capteur-points/${editingPoint.id}/image`, {
+                        method: 'POST',
+                        headers: { 'X-CSRF-TOKEN': CSRF },
+                        body: fd,
+                    });
+                    if (!r.ok) throw new Error();
+                    const { image_url } = await r.json();
+                    if (prev) prev.src = image_url;
+                } catch { alert("Erreur lors de l'upload de l'image."); }
+            });
+        }
     }
 
     modal.classList.remove('hidden');
@@ -159,8 +258,16 @@ async function loadTemoins() {
 async function loadPointDetail(id) {
     try {
         const data = await (await fetch(`/api/capteur-points/${id}`)).json();
-        // Add _idx for the exclusion set to work with loaded mesures
         pointMesures = (data.mesures ?? []).map((m, i) => ({ ...m, _idx: i }));
+
+        // Restaurer les exclusions persistées (nuits supprimées)
+        excludedIdx = new Set();
+        pointMesures.forEach((m) => {
+            if (m.excluded) excludedIdx.add(m._idx);
+        });
+
+        // Restaurer les overrides de nuits persistés
+        nightOverrides = Array.isArray(data.night_overrides) ? data.night_overrides : [];
 
         const temoinId = data.temoin_id;
         if (temoinId) {
@@ -241,8 +348,13 @@ function renderAlerts(mesures) {
     }
 
     if (allFlagged.length) {
-        renderFlaggedTable(allFlagged);
-        section.classList.remove('hidden');
+        const ackKey = flaggedAcknowledgeKey();
+        if (ackKey && localStorage.getItem(ackKey) === '1') {
+            section.classList.add('hidden');
+        } else {
+            renderFlaggedTable(allFlagged);
+            section.classList.remove('hidden');
+        }
     } else if (flagHum.length || flagTempDiff.length) {
         section.classList.remove('hidden');
     } else {
@@ -250,7 +362,15 @@ function renderAlerts(mesures) {
     }
 }
 
+function flaggedAcknowledgeKey() {
+    return editingPoint ? `flags_ack_${editingPoint.id}` : null;
+}
+
 function renderFlaggedTable(flagged) {
+    // Si l'utilisateur a déjà acquitté pour ce point, on ne montre pas le tableau
+    const ackKey = flaggedAcknowledgeKey();
+    if (ackKey && localStorage.getItem(ackKey) === '1') return;
+
     const wrapper = document.getElementById('flagged-table-wrapper');
     const tbody   = document.getElementById('flagged-tbody');
     wrapper.classList.remove('hidden');
@@ -271,6 +391,15 @@ function renderFlaggedTable(flagged) {
         `;
         tbody.appendChild(tr);
     });
+
+    const ackBtn = document.getElementById('btn-acknowledge-errors');
+    if (ackBtn) {
+        ackBtn.onclick = () => {
+            if (ackKey) localStorage.setItem(ackKey, '1');
+            // Masquer toute la section 3 immédiatement
+            document.getElementById('point-alerts-section')?.classList.add('hidden');
+        };
+    }
 }
 
 /* ══════════════════ Diagnostic témoin ══════════════════ */
@@ -376,6 +505,27 @@ function calculateICU(pointData, temoinData, excluded) {
     const globalStd = Math.round(stdDev(diffs) * 100) / 100;
 
     return { results, excludedNights, globalICU, globalStd, valid: globalStd <= 0.5 };
+}
+
+// Recalcule l'ICU en appliquant les overrides manuels sur pAvg/tAvg
+function calculateICUWithOverrides() {
+    const base = calculateICU(pointMesures, temoinMesures, excludedIdx);
+    if (!base || !base.results?.length) return base;
+
+    if (!nightOverrides.length) return base;
+
+    const results = base.results.map((r) => {
+        const ov = nightOverrides.find((o) => o.night === r.night);
+        if (!ov) return r;
+        const diff = Math.round((ov.pAvg - ov.tAvg) * 100) / 100;
+        return { ...r, pAvg: ov.pAvg, tAvg: ov.tAvg, diff };
+    });
+
+    const diffs     = results.map((r) => r.diff);
+    const globalICU = Math.round(avg(diffs) * 100) / 100;
+    const globalStd = Math.round(stdDev(diffs) * 100) / 100;
+
+    return { ...base, results, globalICU, globalStd, valid: globalStd <= 0.5 };
 }
 
 /* ══════════════════ Charts ══════════════════ */
@@ -545,19 +695,39 @@ function renderICUSummary(result) {
 }
 
 function renderNightTable(result) {
-    const tbody = document.getElementById('night-tbody');
+    const tbody   = document.getElementById('night-tbody');
+    const isAuth  = document.body.dataset.auth === '1';
+    const isAdmin = document.body.dataset.admin === '1';
+    const canEdit = isAuth && (!editingPoint || isOwner(editingPoint) || isAdmin);
     tbody.innerHTML = '';
 
     result.results.forEach((r, i) => {
-        const tr      = document.createElement('tr');
-        tr.className  = i % 2 === 1 ? 'bg-slate-50' : '';
+        const tr       = document.createElement('tr');
+        tr.dataset.night = r.night;
+        tr.className   = i % 2 === 1 ? 'bg-slate-50' : '';
         const dotColor = icuColor(r.diff);
+
+        const actionCell = canEdit ? `
+            <td class="px-2 py-2 whitespace-nowrap">
+                <div class="flex items-center gap-1">
+                    <button data-night-edit="${r.night}"
+                        class="night-edit-btn px-2 py-1 text-[10px] font-semibold bg-slate-100 hover:bg-blue-100 text-slate-600 hover:text-blue-700 rounded-lg transition-colors">
+                        Modifier
+                    </button>
+                    <button data-night-delete="${r.night}"
+                        class="night-delete-btn px-2 py-1 text-[10px] font-semibold bg-slate-100 hover:bg-red-100 text-slate-600 hover:text-red-600 rounded-lg transition-colors">
+                        Supprimer
+                    </button>
+                </div>
+            </td>` : '<td></td>';
+
         tr.innerHTML = `
             <td class="px-3 py-2 text-slate-700 whitespace-nowrap font-medium">${r.night}</td>
-            <td class="px-3 py-2 text-right text-red-600 font-medium">${r.pAvg} °C</td>
-            <td class="px-3 py-2 text-right text-emerald-600 font-medium">${r.tAvg} °C</td>
+            <td class="px-3 py-2 text-right text-red-600 font-medium night-pavg">${r.pAvg} °C</td>
+            <td class="px-3 py-2 text-right text-emerald-600 font-medium night-tavg">${r.tAvg} °C</td>
             <td class="px-3 py-2 text-right font-bold" style="color:${dotColor}">${r.diff > 0 ? '+' : ''}${r.diff} °C</td>
             <td class="px-3 py-2"><span class="inline-block w-2.5 h-2.5 rounded-full" style="background:${dotColor}"></span></td>
+            ${actionCell}
         `;
         tbody.appendChild(tr);
     });
@@ -568,9 +738,78 @@ function renderNightTable(result) {
         tr.innerHTML = `
             <td class="px-3 py-2 text-slate-500 italic">${n.night}</td>
             <td colspan="3" class="px-3 py-2 text-slate-400 italic text-xs">${n.reason}</td>
-            <td></td>
+            <td></td><td></td>
         `;
         tbody.appendChild(tr);
+    });
+
+    // Boutons supprimer nuit
+    tbody.querySelectorAll('.night-delete-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+            const night = btn.dataset.nightDelete;
+            if (!confirm(`Supprimer la nuit du ${night} du calcul ICU ?`)) return;
+            nightOverrides = nightOverrides.filter((o) => o.night !== night);
+            // Ajouter les indices des mesures de cette nuit dans excludedIdx (utilisé par calculateICU)
+            pointMesures.forEach((m) => {
+                if (m.enregistre_le.slice(0, 10) === night) {
+                    excludedIdx.add(m._idx ?? m.id);
+                }
+            });
+            const newResult = calculateICU(pointMesures, temoinMesures, excludedIdx);
+            if (newResult && newResult.results) {
+                icuResult = newResult;
+                renderICUSummary(newResult);
+                renderICUChart(newResult.results, newResult.globalICU, newResult.globalStd);
+                renderNightTable(newResult);
+            }
+        });
+    });
+
+    // Boutons modifier nuit
+    tbody.querySelectorAll('.night-edit-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+            const night = btn.dataset.nightEdit;
+            const tr    = tbody.querySelector(`tr[data-night="${night}"]`);
+            if (!tr) return;
+            const pCell = tr.querySelector('.night-pavg');
+            const tCell = tr.querySelector('.night-tavg');
+            const curP  = parseFloat(pCell.textContent);
+            const curT  = parseFloat(tCell.textContent);
+
+            // Remplace les cellules par des inputs
+            pCell.innerHTML = `<input type="number" step="0.01" value="${curP}"
+                class="w-20 text-right text-xs border border-slate-300 rounded px-1 py-0.5 font-mono">`;
+            tCell.innerHTML = `<input type="number" step="0.01" value="${curT}"
+                class="w-20 text-right text-xs border border-slate-300 rounded px-1 py-0.5 font-mono">`;
+
+            const actionDiv = btn.closest('div');
+            actionDiv.innerHTML = `
+                <button class="night-save-btn px-2 py-1 text-[10px] font-semibold bg-emerald-100 hover:bg-emerald-200 text-emerald-700 rounded-lg transition-colors">OK</button>
+                <button class="night-cancel-btn px-2 py-1 text-[10px] font-semibold bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg transition-colors">Annuler</button>
+            `;
+
+            actionDiv.querySelector('.night-cancel-btn').addEventListener('click', () => {
+                renderNightTable(icuResult);
+            });
+
+            actionDiv.querySelector('.night-save-btn').addEventListener('click', () => {
+                const newP = parseFloat(pCell.querySelector('input').value);
+                const newT = parseFloat(tCell.querySelector('input').value);
+                if (isNaN(newP) || isNaN(newT)) return;
+
+                // Stocker l'override en mémoire et recalculer
+                nightOverrides = nightOverrides.filter((o) => o.night !== night);
+                nightOverrides.push({ night, pAvg: newP, tAvg: newT });
+
+                const newResult = calculateICUWithOverrides();
+                if (newResult) {
+                    icuResult = newResult;
+                    renderICUSummary(newResult);
+                    renderICUChart(newResult.results, newResult.globalICU, newResult.globalStd);
+                    renderNightTable(newResult);
+                }
+            });
+        });
     });
 }
 
@@ -609,7 +848,7 @@ async function runAnalysis() {
         setProgress('Calcul de l\'ICU…');
         await sleep(80);
 
-        icuResult = calculateICU(pointMesures, temoinMesures, excludedIdx);
+        icuResult = calculateICUWithOverrides();
 
         document.getElementById('point-icu-section').classList.remove('hidden');
 
@@ -638,7 +877,7 @@ async function runAnalysis() {
                 : '';
 
             document.getElementById('night-tbody').innerHTML =
-                `<tr><td colspan="5" class="px-4 py-4">
+                `<tr><td colspan="6" class="px-4 py-4">
                     <p class="text-sm font-medium text-red-600 mb-1">⚠ ${reason}</p>
                     ${excludedInfo}
                 </td></tr>`;
@@ -654,6 +893,7 @@ async function runAnalysis() {
 /* ══════════════════ Save to backend ══════════════════ */
 async function savePoint() {
     const name     = document.getElementById('point-name')?.value.trim();
+    const dateVal  = document.getElementById('point-date')?.value || null;
     const temoinId = document.getElementById('point-temoin-select')?.value;
 
     if (!name) { document.getElementById('point-name')?.focus(); return; }
@@ -680,19 +920,23 @@ async function savePoint() {
         const body = isEdit
             ? {
                 name,
+                date:              dateVal,
                 capteur_temoin_id: temoinId ? parseInt(temoinId) : undefined,
-                icu_value: icuResult?.globalICU ?? editingPoint.icu_value,
-                std_dev:   icuResult?.globalStd  ?? editingPoint.std_dev,
-                mesures:   mesuresWithExcluded.length ? mesuresWithExcluded : undefined,
+                icu_value:       icuResult?.globalICU ?? editingPoint.icu_value,
+                std_dev:         icuResult?.globalStd  ?? editingPoint.std_dev,
+                night_overrides: nightOverrides.length ? nightOverrides : [],
+                mesures:         mesuresWithExcluded.length ? mesuresWithExcluded : undefined,
               }
             : {
                 name,
+                date:              dateVal,
                 capteur_temoin_id: parseInt(temoinId),
-                lat:       pendingPoint?.latlng?.lat,
-                lng:       pendingPoint?.latlng?.lng,
-                mesures:   mesuresWithExcluded,
-                icu_value: icuResult?.globalICU ?? null,
-                std_dev:   icuResult?.globalStd  ?? null,
+                lat:             pendingPoint?.latlng?.lat,
+                lng:             pendingPoint?.latlng?.lng,
+                mesures:         mesuresWithExcluded,
+                icu_value:       icuResult?.globalICU ?? null,
+                std_dev:         icuResult?.globalStd  ?? null,
+                night_overrides: nightOverrides.length ? nightOverrides : [],
               };
 
         const res = await fetch(url, {
@@ -705,13 +949,34 @@ async function savePoint() {
         const data = await res.json();
 
         if (!isEdit) {
+            // Upload de l'image si une a été sélectionnée (le point vient d'être créé → on a maintenant son id)
+            const imageInput = document.getElementById('point-image-input');
+            if (imageInput?.files[0]) {
+                const fd = new FormData();
+                fd.append('image', imageInput.files[0]);
+                try {
+                    const imgRes = await fetch(`/api/capteur-points/${data.id}/image`, {
+                        method: 'POST',
+                        headers: { 'X-CSRF-TOKEN': CSRF },
+                        body: fd,
+                    });
+                    if (imgRes.ok) {
+                        const imgData = await imgRes.json();
+                        data.image_url = imgData.image_url;
+                    }
+                } catch { /* non-bloquant */ }
+            }
+            // Si la section 3 avait été acquittée pour ce nouveau point, persister l'ack avec le vrai ID
+            if (document.getElementById('point-alerts-section')?.classList.contains('hidden')) {
+                localStorage.setItem(`flags_ack_${data.id}`, '1');
+            }
             addPointMarker(data);
         } else {
             const marker = pointsOnMap[editingPoint.id];
             if (marker) {
                 // Fusionner les données retournées avec celles en mémoire pour garder icu_value si inchangée
                 const merged = { ...editingPoint, ...data };
-                marker.setIcon(buildPointIcon(merged.icu_value));
+                marker.setIcon(buildPointIcon(merged));
                 marker.setPopupContent(pointPopupContent(merged));
             }
         }
