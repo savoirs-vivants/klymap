@@ -8,6 +8,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use OpenApi\Attributes as OA;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Font;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class CapteurTemoinController extends Controller
 {
@@ -162,61 +168,111 @@ class CapteurTemoinController extends Controller
         $mesures  = $capteurTemoin->mesures()->orderBy('enregistre_le')->get();
         $filename = 'temoin_' . $capteurTemoin->id . '_' . now()->format('Ymd_His') . '.xlsx';
 
-        $xml = $this->buildXlsx($capteurTemoin, $mesures);
+        $spreadsheet = $this->buildXlsx($capteurTemoin, $mesures);
 
-        return response($xml, 200, [
+        if (ob_get_length()) {
+            ob_end_clean();
+        }
+
+        return response()->streamDownload(function () use ($spreadsheet) {
+            (new Xlsx($spreadsheet))->save('php://output');
+        }, $filename, [
             'Content-Type'        => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
         ]);
     }
 
-    private function buildXlsx(CapteurTemoin $capteurTemoin, \Illuminate\Support\Collection $mesures): string
+    private function buildXlsx(CapteurTemoin $capteurTemoin, \Illuminate\Support\Collection $mesures): Spreadsheet
     {
-        $esc = fn ($v) => htmlspecialchars((string) $v, ENT_XML1);
+        $spreadsheet = new Spreadsheet();
+        $sheet       = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Capteur Témoin');
 
-        $rows  = '';
-        $rowNb = 1;
-
-        $meta = [
-            ['Témoin',    $capteurTemoin->name],
-            ['Latitude',  $capteurTemoin->lat],
-            ['Longitude', $capteurTemoin->lng],
-            [],
-            ['Date / Heure', 'Temp. SHT (°C)', 'Humidité SHT (%)', 'Temp. TMP (°C)'],
+        // ── Bloc d'informations ──────────────────────────────────────────────
+        $infos = [
+            ['Capteur Témoin', $capteurTemoin->name ?? '—'],
+            ['Latitude',       $capteurTemoin->lat   ?? '—'],
+            ['Longitude',      $capteurTemoin->lng   ?? '—'],
+            ['Nb mesures',     $mesures->count()],
+            ['Export le',      now()->format('d/m/Y H:i')],
         ];
 
-        foreach ($meta as $cols) {
-            $cells = '';
-            foreach ($cols as $val) {
-                $cells .= "<Cell><Data ss:Type=\"String\">{$esc($val)}</Data></Cell>";
-            }
-            $rows  .= "<Row ss:Index=\"{$rowNb}\">{$cells}</Row>";
-            $rowNb++;
+        $row = 1;
+        foreach ($infos as [$label, $value]) {
+            $sheet->setCellValue("A{$row}", $label);
+            $sheet->setCellValue("B{$row}", $value);
+            $sheet->getStyle("A{$row}")->getFont()->setBold(true);
+            $sheet->getStyle("A{$row}")->getFont()->setColor(
+                (new \PhpOffice\PhpSpreadsheet\Style\Color())->setRGB('64748b')
+            );
+            $row++;
         }
+
+        $row++; // ligne vide de séparation
+
+        // ── En-têtes du tableau ──────────────────────────────────────────────
+        $headerRow = $row;
+        $headers = ['Date & Heure', 'Temp. SHT (°C)', 'Humidité SHT (%)', 'Temp. TMP (°C)'];
+        $sheet->fromArray($headers, null, "A{$headerRow}");
+
+        $headerRange = "A{$headerRow}:D{$headerRow}";
+        $sheet->getStyle($headerRange)->applyFromArray([
+            'font'      => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill'      => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '0F3460']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+        ]);
+
+        $row++;
+
+        // ── Données ──────────────────────────────────────────────────────────
+        $firstDataRow = $row;
 
         foreach ($mesures as $m) {
-            $cells  = "<Cell><Data ss:Type=\"String\">{$esc($m->enregistre_le->format('d/m/Y H:i:s'))}</Data></Cell>";
-            $cells .= "<Cell><Data ss:Type=\"Number\">{$esc($m->sht_temp ?? '')}</Data></Cell>";
-            $cells .= "<Cell><Data ss:Type=\"Number\">{$esc($m->sht_hum  ?? '')}</Data></Cell>";
-            $cells .= "<Cell><Data ss:Type=\"Number\">{$esc($m->tmp_temp ?? '')}</Data></Cell>";
-            $rows  .= "<Row>{$cells}</Row>";
+            $sheet->setCellValue("A{$row}", $m->enregistre_le->format('d/m/Y H:i:s'));
+            $sheet->setCellValue("B{$row}", $m->sht_temp);
+            $sheet->setCellValue("C{$row}", $m->sht_hum);
+            $sheet->setCellValue("D{$row}", $m->tmp_temp);
+
+            // Zébrage une ligne sur deux
+            if ($row % 2 === 0) {
+                $sheet->getStyle("A{$row}:D{$row}")->getFill()
+                    ->setFillType(Fill::FILL_SOLID)
+                    ->getStartColor()->setRGB('F8FAFC');
+            }
+
+            $sheet->getStyle("A{$row}")->getFont()->setColor(
+                (new \PhpOffice\PhpSpreadsheet\Style\Color())->setRGB('64748B')
+            );
+            $sheet->getStyle("B{$row}:D{$row}")->getAlignment()
+                ->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+            $row++;
         }
 
-        return <<<XML
-<?xml version="1.0" encoding="UTF-8"?>
-<?mso-application progid="Excel.Sheet"?>
-<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
-  xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
-  <Worksheet ss:Name="Capteur Témoin">
-    <Table>{$rows}</Table>
-  </Worksheet>
-</Workbook>
-XML;
+        // ── Bordure autour du tableau complet ────────────────────────────────
+        if ($row > $firstDataRow) {
+            $tableRange = "A{$headerRow}:D" . ($row - 1);
+            $sheet->getStyle($tableRange)->getBorders()->getAllBorders()->applyFromArray([
+                'borderStyle' => Border::BORDER_THIN,
+                'color'       => ['rgb' => 'E2E8F0'],
+            ]);
+        }
+
+        // ── Largeurs de colonnes ─────────────────────────────────────────────
+        $sheet->getColumnDimension('A')->setWidth(22);
+        $sheet->getColumnDimension('B')->setWidth(16);
+        $sheet->getColumnDimension('C')->setWidth(18);
+        $sheet->getColumnDimension('D')->setWidth(16);
+
+        // Figer la ligne d'en-têtes pour faciliter le défilement
+        $sheet->freezePane('A' . ($headerRow + 1));
+
+        return $spreadsheet;
     }
 
     private function authorize(CapteurTemoin $temoin): void
     {
-        if (Auth::check() && Auth::user()->isAdmin()) {
+        if (Auth::check() && Auth::user()->role === 'admin') {
             return;
         }
 
