@@ -6,41 +6,7 @@ document.addEventListener('klymap:ready', () => {
 
     fetch('/api/capteurs-map')
         .then((r) => r.json())
-        .then((stations) => {
-            stations.forEach((s) => {
-                const icon = window.L.divIcon({
-                    className: '',
-                    html: `<div style="
-                        width:36px;height:36px;border-radius:50%;
-                        background:#2563eb;border:3px solid #fff;
-                        box-shadow:0 2px 8px rgba(37,99,235,0.45);
-                        display:flex;align-items:center;justify-content:center;
-                    ">
-                        <svg width="16" height="16" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/>
-                        </svg>
-                    </div>`,
-                    iconSize: [36, 36],
-                    iconAnchor: [18, 18],
-                });
-
-                const lines = [
-                    `<strong>${s.uid ?? 'Station #' + s.id}</strong>`,
-                    s.temp           != null ? `🌡 ${s.temp} °C` : null,
-                    s.hum            != null ? `💧 ${s.hum} %` : null,
-                    s.vitesse_vent   != null ? `💨 ${s.vitesse_vent} km/h` : null,
-                    s.press_baro     != null ? `📊 ${s.press_baro} hPa` : null,
-                    s.pluie          != null ? `🌧 ${s.pluie} mm` : null,
-                    s.updated_at     != null ? `<em class="text-slate-400">${s.updated_at}</em>` : null,
-                    `<a href="${s.show_url}" style="color:#2563eb;font-weight:600;">Voir l'historique →</a>`,
-                ].filter(Boolean).join('<br>');
-
-                window.L.marker([s.lat, s.lng], { icon })
-                    .addTo(map)
-                    .bindPopup(lines, { maxWidth: 220 });
-            });
-        })
+        .then((stations) => stations.forEach(buildCapteurStationMarker))
         .catch(() => {});
 });
 
@@ -262,5 +228,99 @@ btnSync?.addEventListener('click', async () => {
     } finally {
         btnSync.disabled  = false;
         btnSync.innerHTML = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg> Synchroniser avec la BDD`;
+    }
+});
+
+// ─── Overlay : Localiser un capteur par DevEui ────────────────────────────────
+
+function buildCapteurStationMarker(s) {
+    const map = window._klymapInstance;
+    if (!map) return;
+    const icon = window.L.divIcon({
+        className: '',
+        html: `<div style="width:36px;height:36px;border-radius:50%;background:#2563eb;border:3px solid #fff;box-shadow:0 2px 8px rgba(37,99,235,0.45);display:flex;align-items:center;justify-content:center;">
+            <svg width="16" height="16" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/>
+            </svg></div>`,
+        iconSize: [36, 36], iconAnchor: [18, 18],
+    });
+    const lines = [
+        `<strong>${s.uid ?? s.deveui ?? 'Station #' + s.id}</strong>`,
+        s.temp           != null ? `🌡 ${s.temp} °C` : null,
+        s.hum            != null ? `💧 ${s.hum} %` : null,
+        s.vitesse_vent   != null ? `💨 ${s.vitesse_vent} km/h` : null,
+        s.press_baro     != null ? `📊 ${s.press_baro} hPa` : null,
+        s.pluie          != null ? `🌧 ${s.pluie} mm` : null,
+        s.updated_at     != null ? `<em class="text-slate-400">${s.updated_at}</em>` : null,
+        `<a href="${s.show_url}" style="color:#2563eb;font-weight:600;">Voir l'historique →</a>`,
+    ].filter(Boolean).join('<br>');
+    window.L.marker([s.lat, s.lng], { icon }).addTo(map).bindPopup(lines, { maxWidth: 220 });
+}
+
+window.openCapteurLocateModal = function (lat, lng) {
+    const overlay = document.getElementById('overlay-capteur-locate');
+    if (!overlay) return;
+    document.getElementById('capteur-locate-deveui').value = '';
+    document.getElementById('capteur-locate-lat').value    = lat ?? '';
+    document.getElementById('capteur-locate-lng').value    = lng ?? '';
+    const coords = document.getElementById('capteur-locate-coords');
+    if (coords) coords.textContent = lat != null ? `${lat.toFixed(6)}, ${lng.toFixed(6)}` : '—';
+    const err = document.getElementById('capteur-locate-error');
+    err.textContent = ''; err.classList.add('hidden');
+    overlay.classList.remove('hidden');
+};
+
+window.closeCapteurLocateModal = function () {
+    document.getElementById('overlay-capteur-locate')?.classList.add('hidden');
+};
+
+document.getElementById('capteur-locate-save-btn')?.addEventListener('click', async () => {
+    const deveui = document.getElementById('capteur-locate-deveui').value.trim();
+    const lat    = document.getElementById('capteur-locate-lat').value.trim();
+    const lng    = document.getElementById('capteur-locate-lng').value.trim();
+    const err    = document.getElementById('capteur-locate-error');
+    const btn    = document.getElementById('capteur-locate-save-btn');
+
+    err.classList.add('hidden');
+
+    if (!deveui || !lat || !lng) {
+        err.textContent = 'Tous les champs sont obligatoires.';
+        err.classList.remove('hidden');
+        return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Enregistrement…';
+
+    try {
+        const resp = await fetch('/api/capteurs/locate', {
+            method:  'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            },
+            body: JSON.stringify({ DevEui: deveui, lat: parseFloat(lat), long: parseFloat(lng) }),
+        });
+
+        const data = await resp.json();
+
+        if (!resp.ok) {
+            err.textContent = data.error || 'Erreur serveur.';
+            err.classList.remove('hidden');
+            return;
+        }
+
+        buildCapteurStationMarker(data);
+        window.closeCapteurLocateModal();
+
+        // Centrer la carte sur le nouveau marqueur
+        window._klymapInstance?.setView([data.lat, data.lng], 15);
+
+    } catch (e) {
+        err.textContent = 'Erreur réseau : ' + e.message;
+        err.classList.remove('hidden');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Valider';
     }
 });
