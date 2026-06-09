@@ -72,6 +72,24 @@
                         </button>
                     @endauth
                 </div>
+
+                @if (auth()->check() && auth()->user()->isAdmin())
+                <div class="flex items-center justify-between">
+                    <button onclick="window.toggleMapFilter ? window.toggleMapFilter(this, 'capteur', null) : null"
+                        class="legend-filter group flex items-center gap-3 text-left transition-all outline-none rounded-lg p-2 hover:bg-teal-700/50">
+                        <div class="w-4 h-4 rounded-full bg-blue-500 shadow-sm ring-1 ring-white/20 shrink-0 transition-transform group-hover:scale-110"></div>
+                        <span class="text-sm font-medium text-white transition-colors">Capteurs</span>
+                    </button>
+                    <button onclick="window.activatePlacementMode('capteur')"
+                        class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-700 hover:bg-teal-600 text-teal-200 hover:text-white text-xs font-semibold transition-colors shrink-0 shadow-sm"
+                        title="Localiser un capteur sur la carte">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Ajouter
+                    </button>
+                </div>
+                @endif
             </div>
 
             @if(auth()->check() || session()->has("participant"))
