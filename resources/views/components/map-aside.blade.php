@@ -103,9 +103,9 @@
                         Carte interactive
                     </a>
 
-                    <a href="/stations"
-                        class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->is('stations*') ? 'bg-teal-700 text-white shadow-sm' : 'text-teal-100 hover:bg-teal-700/50 hover:text-white' }}">
-                        <svg class="w-4 h-4 {{ request()->is('stations*') ? 'text-teal-300' : 'text-teal-400/70' }} shrink-0"
+                    <a href="{{ route('capteurs.index') }}"
+                        class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->is('capteurs*') ? 'bg-teal-700 text-white shadow-sm' : 'text-teal-100 hover:bg-teal-700/50 hover:text-white' }}">
+                        <svg class="w-4 h-4 {{ request()->is('capteurs*') ? 'text-teal-300' : 'text-teal-400/70' }} shrink-0"
                             fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
