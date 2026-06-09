@@ -8,6 +8,7 @@ use App\Models\CapteurTemoin;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use OpenApi\Attributes as OA;
 
 class CapteurPointController extends Controller
@@ -49,10 +50,12 @@ class CapteurPointController extends Controller
             'user_id'           => Auth::id(),
             'capteur_temoin_id' => $request->capteur_temoin_id,
             'name'              => $request->name,
+            'date'              => $request->date ?? null,
             'lat'               => $request->lat,
             'lng'               => $request->lng,
             'icu_value'         => $request->icu_value,
             'std_dev'           => $request->std_dev,
+            'night_overrides'   => $request->night_overrides ?? null,
             'session_id'        => $participant['id_session'] ?? null,
             'participant_id'    => $participant['id'] ?? null,
         ]);
@@ -115,9 +118,11 @@ class CapteurPointController extends Controller
         ]);
 
         $update = [
-            'name'      => $request->name,
-            'icu_value' => $request->icu_value,
-            'std_dev'   => $request->std_dev,
+            'name'            => $request->name,
+            'date'            => $request->date ?? $capteurPoint->date,
+            'icu_value'       => $request->icu_value,
+            'std_dev'         => $request->std_dev,
+            'night_overrides' => $request->has('night_overrides') ? $request->night_overrides : $capteurPoint->night_overrides,
         ];
         if ($request->filled('capteur_temoin_id')) {
             $update['capteur_temoin_id'] = $request->capteur_temoin_id;
@@ -150,18 +155,37 @@ class CapteurPointController extends Controller
         return response()->json(['ok' => true]);
     }
 
+    public function uploadImage(Request $request, CapteurPoint $capteurPoint)
+    {
+        $this->authorize($capteurPoint);
+
+        $request->validate(['image' => ['required', 'image', 'max:4096']]);
+
+        if ($capteurPoint->image) {
+            Storage::disk('public')->delete($capteurPoint->image);
+        }
+
+        $path = $request->file('image')->store('capteur-points', 'public');
+        $capteurPoint->update(['image' => $path]);
+
+        return response()->json(['image_url' => asset('storage/' . $path)]);
+    }
+
     private function pointResource(CapteurPoint $p): array
     {
         return [
-            'id'           => $p->id,
-            'user_id'      => $p->user_id,
-            'name'         => $p->name,
-            'lat'          => (float) $p->lat,
-            'lng'          => (float) $p->lng,
-            'icu_value'    => $p->icu_value !== null ? (float) $p->icu_value : null,
-            'std_dev'      => $p->std_dev !== null ? (float) $p->std_dev : null,
-            'temoin_name'  => $p->capteurTemoin?->name,
-            'temoin_id'    => $p->capteur_temoin_id,
+            'id'             => $p->id,
+            'user_id'        => $p->user_id,
+            'name'           => $p->name,
+            'date'           => $p->date?->format('Y-m-d'),
+            'image_url'      => $p->image ? asset('storage/' . $p->image) : null,
+            'night_overrides' => $p->night_overrides ?? [],
+            'lat'            => (float) $p->lat,
+            'lng'            => (float) $p->lng,
+            'icu_value'      => $p->icu_value !== null ? (float) $p->icu_value : null,
+            'std_dev'        => $p->std_dev !== null ? (float) $p->std_dev : null,
+            'temoin_name'    => $p->capteurTemoin?->name,
+            'temoin_id'      => $p->capteur_temoin_id,
             'user_name'      => $p->user
                 ? "{$p->user->firstname} {$p->user->name}"
                 : ($p->participant ? $p->participant->pseudo : '—'),
@@ -173,7 +197,7 @@ class CapteurPointController extends Controller
 
     private function authorize(CapteurPoint $point): void
     {
-        if (Auth::check() && Auth::user()->isAdmin()) {
+        if (Auth::check() && Auth::user()->role === 'admin') {
             return;
         }
 
