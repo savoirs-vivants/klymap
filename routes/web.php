@@ -11,6 +11,7 @@ use App\Http\Controllers\CampagneController;
 use App\Http\Controllers\DonneesCampagnesController;
 use App\Http\Controllers\ParticipantController;
 use App\Http\Controllers\ProfilController;
+use App\Http\Controllers\CapteurController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn() => view('welcome'))->name('home');
@@ -43,6 +44,8 @@ Route::prefix('api')->name('api.')->group(function () {
 
     Route::get('/capteur-points', [CapteurPointController::class, 'index'])->name('points.index');
     Route::get('/capteur-points/{capteurPoint}', [CapteurPointController::class, 'show'])->name('points.show');
+
+    Route::get('/capteurs-map', [CapteurController::class, 'mapMarkers'])->name('capteurs.map-markers');
 });
 
 Route::middleware('auth')->group(function () {
@@ -57,7 +60,6 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::get('/campagnes',                      [CampagneController::class, 'index'])->name('campagnes.index');
-    // Accessible aussi aux participants via middleware séparé
     Route::post('/campagne',                      [CampagneController::class, 'store'])->name('campagne.store');
     Route::put('/campagnes/{campagne}',           [CampagneController::class, 'update'])->name('campagne.update');
     Route::get('/campagnes/{campagne}/participants', [CampagneController::class, 'participants'])->name('campagne.participants');
@@ -68,6 +70,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/profil/modifier',          [ProfilController::class, 'edit'])->name('profil.edit');
     Route::put('/profil/modifier',          [ProfilController::class, 'update'])->name('profil.update');
     Route::put('/profil/modifier/password', [ProfilController::class, 'updatePassword'])->name('profil.update-password');
+
+    Route::get('/capteurs', [CapteurController::class, 'index'])->name('capteurs.index');
+    Route::get('/capteurs/{id}', [CapteurController::class, 'show'])->name('capteurs.show');
+    Route::get('/capteurs/{id}/chart-data', [CapteurController::class, 'chartData'])->name('capteurs.chart-data');
+    Route::post('/capteurs', [CapteurController::class, 'store'])->name('capteurs.store');
+    Route::post('/capteurs/bluetooth/sync', [CapteurController::class, 'syncBluetooth'])->name('capteurs.bluetooth.sync');
+    Route::get('/capteurs/{id}/export', [CapteurController::class, 'export'])->name('capteurs.export');
 });
 
 Route::middleware(['auth', 'admin'])->prefix('backoffice')->name('backoffice.')->group(function () {
@@ -84,5 +93,6 @@ Route::middleware('auth.participant')->group(function () {
         Route::post('/capteur-points', [CapteurPointController::class, 'store'])->name('points.store');
         Route::put('/capteur-points/{capteurPoint}', [CapteurPointController::class, 'update'])->name('points.update');
         Route::delete('/capteur-points/{capteurPoint}', [CapteurPointController::class, 'destroy'])->name('points.destroy');
+        Route::post('/capteur-points/{capteurPoint}/image', [CapteurPointController::class, 'uploadImage'])->name('points.upload-image');
     });
 });
