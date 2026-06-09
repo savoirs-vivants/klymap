@@ -11,6 +11,7 @@ export default {
                 primary: '#0f3460',
                 accent: '#16c79a',
                 aside: '#0d2847',
+                'sv-blue': '#2563eb',
             },
             fontFamily: {
                 sans: ['Space Grotesk', 'ui-sans-serif', 'system-ui', 'sans-serif'],
