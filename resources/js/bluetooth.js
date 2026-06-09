@@ -79,10 +79,10 @@ const btnDownload = document.getElementById('bt-action-download');
 const btnSync     = document.getElementById('bt-action-sync');
 const syncStatus  = document.getElementById('bt-sync-status');
 
-// UUIDs du module RN4871 (UART Bluetooth LE)
-const RN4871_SERVICE_UUID = '49535343-fe7d-4ae5-8fa9-9fafd205e455';
-const RN4871_TX_UUID      = '49535343-1e4d-4bd9-ba61-23c647249616';
-const RN4871_RX_UUID      = '49535343-8841-43f4-a8d4-ecbe34729bb3';
+// UUIDs du module RN4871 (UART Bluetooth LE) -> remplacer par les valeurs de la station météo
+// const RN4871_SERVICE_UUID = '';
+// const RN4871_TX_UUID      = '';
+// const RN4871_RX_UUID      = '';
 
 let receiveBuffer       = "";
 let writeCharacteristic = null;
