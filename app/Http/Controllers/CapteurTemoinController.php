@@ -7,6 +7,7 @@ use App\Models\CapteurTemoinMesure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use OpenApi\Attributes as OA;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
@@ -36,6 +37,8 @@ class CapteurTemoinController extends Controller
         $temoins = $query->get()->map(fn ($t) => [
             'id'           => $t->id,
             'name'         => $t->name,
+            'image_url'     => $t->image ? asset('storage/' . $t->image) : null,
+            'date'          => $t->date?->format('Y-m-d'),
             'lat'           => (float) $t->lat,
             'lng'           => (float) $t->lng,
             'mesures_count' => Auth::check() ? $t->mesures->count() : $t->mesures_count,
@@ -61,10 +64,13 @@ class CapteurTemoinController extends Controller
         ]);
 
         $this->saveMesures($temoin, $request->mesures);
+        $this->updateDate($temoin);
 
         return response()->json([
             'id'   => $temoin->id,
             'name' => $temoin->name,
+            'image_url' => $temoin->image ? asset('storage/' . $temoin->image) : null,
+            'date'      => $temoin->date?->format('Y-m-d'),
             'lat'  => (float) $temoin->lat,
             'lng'  => (float) $temoin->lng,
             'mesures_count' => count($request->mesures),
@@ -106,6 +112,8 @@ class CapteurTemoinController extends Controller
         return response()->json([
             'id'      => $capteurTemoin->id,
             'name'    => $capteurTemoin->name,
+            'image_url' => $capteurTemoin->image ? asset('storage/' . $capteurTemoin->image) : null,
+            'date'      => $capteurTemoin->date?->format('Y-m-d'),
             'mesures' => $mesures,
         ]);
     }
@@ -124,6 +132,7 @@ class CapteurTemoinController extends Controller
         if ($request->filled('mesures') && count($request->mesures)) {
             $capteurTemoin->mesures()->delete();
             $this->saveMesures($capteurTemoin, $request->mesures);
+            $this->updateDate($capteurTemoin);
         }
 
         return response()->json(['ok' => true]);
@@ -135,6 +144,22 @@ class CapteurTemoinController extends Controller
         $capteurTemoin->delete();
 
         return response()->json(['ok' => true]);
+    }
+
+    public function uploadImage(Request $request, CapteurTemoin $capteurTemoin)
+    {
+        $this->authorize($capteurTemoin);
+
+        $request->validate(['image' => ['required', 'image', 'max:4096']]);
+
+        if ($capteurTemoin->image) {
+            Storage::disk('public')->delete($capteurTemoin->image);
+        }
+
+        $path = $request->file('image')->store('capteur-temoins', 'public');
+        $capteurTemoin->update(['image' => $path]);
+
+        return response()->json(['image_url' => asset('storage/' . $path)]);
     }
 
     #[OA\Get(
@@ -292,5 +317,12 @@ class CapteurTemoinController extends Controller
         ], $mesures);
 
         CapteurTemoinMesure::insert($rows);
+    }
+
+    private function updateDate(CapteurTemoin $temoin): void
+    {
+        $first = $temoin->mesures()->min('enregistre_le');
+
+        $temoin->update(['date' => $first ? Carbon::parse($first)->toDateString() : null]);
     }
 }

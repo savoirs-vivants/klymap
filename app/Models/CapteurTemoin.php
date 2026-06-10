@@ -8,7 +8,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class CapteurTemoin extends Model
 {
-    protected $fillable = ['user_id', 'name', 'lat', 'lng'];
+    protected $fillable = ['user_id', 'name', 'image', 'date', 'lat', 'lng'];
+
+    protected $casts = [
+        'date' => 'date',
+    ];
 
     public function user(): BelongsTo
     {

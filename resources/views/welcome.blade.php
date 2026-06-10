@@ -130,6 +130,30 @@
                                 class="w-full px-3.5 py-2.5 text-sm text-slate-900 bg-slate-50 border border-slate-200 rounded-xl focus:border-teal-500 focus:ring-2 focus:ring-teal-100 outline-none transition-all placeholder:text-slate-300">
                         </div>
 
+                        <div id="temoin-date-section" class="hidden">
+                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Date
+                                (1ère mesure du jeu de données)</label>
+                            <input id="temoin-date" type="date" readonly disabled
+                                class="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl outline-none transition-all text-slate-500">
+                        </div>
+
+                        <div id="temoin-image-section">
+                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Photo
+                                du capteur</label>
+                            <div class="flex items-start gap-3">
+                                <img id="temoin-image-preview" src="" alt="Photo capteur témoin"
+                                    class="hidden w-24 h-24 object-cover rounded-xl border border-slate-200 shrink-0">
+                                <label for="temoin-image-input"
+                                    class="flex flex-col items-center justify-center gap-1.5 px-4 py-4 border-2 border-dashed border-slate-200 rounded-xl cursor-pointer bg-slate-50 hover:border-teal-400 hover:bg-teal-50/50 transition-all group flex-1">
+                                    <svg class="w-6 h-6 text-slate-300 group-hover:text-teal-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                    </svg>
+                                    <span id="temoin-image-cta" class="text-xs font-medium text-slate-400 group-hover:text-teal-600 transition-colors">Ajouter une photo</span>
+                                    <input id="temoin-image-input" type="file" accept="image/*" class="sr-only">
+                                </label>
+                            </div>
+                        </div>
+
                         <div>
                             <label id="temoin-file-label"
                                 class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Fichier
@@ -257,16 +281,10 @@
                 <section>
                     <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">1 — Informations</h3>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
+                        <div class="sm:col-span-2">
                             <label class="block text-xs font-semibold text-slate-600 mb-1.5">Nom du point</label>
                             <input id="point-name" type="text" placeholder="Ex : Place du Capitole"
                                 class="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:border-teal-500 focus:ring-2 focus:ring-teal-100 outline-none transition-all placeholder:text-slate-300"
-                                @if (!auth()->check() && !session()->has('participant')) readonly @endif>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Date de l'analyse</label>
-                            <input id="point-date" type="date"
-                                class="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:border-teal-500 focus:ring-2 focus:ring-teal-100 outline-none transition-all"
                                 @if (!auth()->check() && !session()->has('participant')) readonly @endif>
                         </div>
                         <div class="sm:col-span-2">

@@ -50,7 +50,6 @@ class CapteurPointController extends Controller
             'user_id'           => Auth::id(),
             'capteur_temoin_id' => $request->capteur_temoin_id,
             'name'              => $request->name,
-            'date'              => $request->date ?? null,
             'lat'               => $request->lat,
             'lng'               => $request->lng,
             'icu_value'         => $request->icu_value,
@@ -61,6 +60,7 @@ class CapteurPointController extends Controller
         ]);
 
         $this->saveMesures($point, $request->mesures);
+        $this->updateDate($point);
 
         $point->load(['user', 'capteurTemoin', 'participant']);
 
@@ -119,7 +119,6 @@ class CapteurPointController extends Controller
 
         $update = [
             'name'            => $request->name,
-            'date'            => $request->date ?? $capteurPoint->date,
             'icu_value'       => $request->icu_value,
             'std_dev'         => $request->std_dev,
             'night_overrides' => $request->has('night_overrides') ? $request->night_overrides : $capteurPoint->night_overrides,
@@ -133,6 +132,7 @@ class CapteurPointController extends Controller
         if ($request->filled('mesures') && count($request->mesures)) {
             $capteurPoint->mesures()->delete();
             $this->saveMesures($capteurPoint, $request->mesures);
+            $this->updateDate($capteurPoint);
         } elseif ($request->has('excluded')) {
             $capteurPoint->mesures()->update(['excluded' => false]);
             if (count($request->excluded)) {
@@ -224,5 +224,12 @@ class CapteurPointController extends Controller
         ], $mesures);
 
         CapteurPointMesure::insert($rows);
+    }
+
+    private function updateDate(CapteurPoint $point): void
+    {
+        $first = $point->mesures()->min('enregistre_le');
+
+        $point->update(['date' => $first ? Carbon::parse($first)->toDateString() : null]);
     }
 }

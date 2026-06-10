@@ -100,9 +100,6 @@ window.openPointModal = function (point = null) {
     const nameInput = document.getElementById('point-name');
     if (nameInput) nameInput.value = point?.name ?? '';
 
-    const dateInput = document.getElementById('point-date');
-    if (dateInput) dateInput.value = point?.date ?? '';
-
     // Image preview (zone upload + miniature dans l'en-tête)
     const imgPreview = document.getElementById('point-image-preview');
     const imgThumb   = document.getElementById('modal-point-image-thumb');
@@ -159,7 +156,6 @@ window.openPointModal = function (point = null) {
 
     const canEdit = isAuth && (!point || isOwner(point) || isAdmin);
 
-    const dateInput2  = document.getElementById('point-date');
     const imageSection = document.getElementById('point-image-section');
     const imageInput   = document.getElementById('point-image-input');
 
@@ -167,7 +163,6 @@ window.openPointModal = function (point = null) {
         if (deleteBtn) deleteBtn.classList.replace('flex', 'hidden');
         if (saveBtn)   saveBtn.classList.add('hidden');
         if (nameInput) nameInput.disabled = true;
-        if (dateInput2) dateInput2.disabled = true;
         if (temoinSelect) temoinSelect.disabled = true;
         if (fileSection) fileSection.classList.add('hidden');
         if (imageSection) imageSection.classList.add('hidden');
@@ -183,7 +178,6 @@ window.openPointModal = function (point = null) {
             saveBtn.textContent = point ? 'Mettre à jour' : 'Valider';
         }
         if (nameInput) nameInput.disabled = false;
-        if (dateInput2) dateInput2.disabled = false;
         if (temoinSelect) temoinSelect.disabled = false;
         if (fileSection) fileSection.classList.remove('hidden');
         if (imageSection) imageSection.classList.remove('hidden');
@@ -899,7 +893,6 @@ async function runAnalysis() {
 /* ══════════════════ Save to backend ══════════════════ */
 async function savePoint() {
     const name     = document.getElementById('point-name')?.value.trim();
-    const dateVal  = document.getElementById('point-date')?.value || null;
     const temoinId = document.getElementById('point-temoin-select')?.value;
 
     if (!name) { document.getElementById('point-name')?.focus(); return; }
@@ -926,7 +919,6 @@ async function savePoint() {
         const body = isEdit
             ? {
                 name,
-                date:              dateVal,
                 capteur_temoin_id: temoinId ? parseInt(temoinId) : undefined,
                 icu_value:       icuResult?.globalICU ?? editingPoint.icu_value,
                 std_dev:         icuResult?.globalStd  ?? editingPoint.std_dev,
@@ -935,7 +927,6 @@ async function savePoint() {
               }
             : {
                 name,
-                date:              dateVal,
                 capteur_temoin_id: parseInt(temoinId),
                 lat:             pendingPoint?.latlng?.lat,
                 lng:             pendingPoint?.latlng?.lng,

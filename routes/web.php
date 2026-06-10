@@ -59,6 +59,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/capteur-temoins', [CapteurTemoinController::class, 'store'])->name('temoins.store');
         Route::put('/capteur-temoins/{capteurTemoin}', [CapteurTemoinController::class, 'update'])->name('temoins.update');
         Route::delete('/capteur-temoins/{capteurTemoin}', [CapteurTemoinController::class, 'destroy'])->name('temoins.destroy');
+        Route::post('/capteur-temoins/{capteurTemoin}/image', [CapteurTemoinController::class, 'uploadImage'])->name('temoins.upload-image');
 
     });
 

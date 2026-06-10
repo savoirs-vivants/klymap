@@ -72,6 +72,57 @@ window.openTemoinOverlay = function (temoin = null) {
     document.getElementById('temoin-file-input').value = '';
     document.getElementById('temoin-preview').classList.add('hidden');
 
+    // Date (1ère mesure du jeu de données)
+    const dateSection = document.getElementById('temoin-date-section');
+    const dateInput   = document.getElementById('temoin-date');
+    if (dateInput) dateInput.value = temoin?.date ?? '';
+    dateSection?.classList.toggle('hidden', !temoin?.date);
+
+    // Photo du capteur
+    const imgPreview = document.getElementById('temoin-image-preview');
+    const imgCta     = document.getElementById('temoin-image-cta');
+    const imgInput   = document.getElementById('temoin-image-input');
+    if (imgInput) imgInput.value = '';
+    if (temoin?.image_url) {
+        if (imgPreview) { imgPreview.src = temoin.image_url; imgPreview.classList.remove('hidden'); }
+        if (imgCta) imgCta.textContent = 'Changer la photo';
+    } else {
+        if (imgPreview) { imgPreview.src = ''; imgPreview.classList.add('hidden'); }
+        if (imgCta) imgCta.textContent = 'Ajouter une photo';
+    }
+
+    if (imgInput && !imgInput._listenerAdded) {
+        imgInput._listenerAdded = true;
+        imgInput.addEventListener('change', async () => {
+            const file = imgInput.files[0];
+            if (!file) return;
+
+            const prev = document.getElementById('temoin-image-preview');
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                if (prev) { prev.src = e.target.result; prev.classList.remove('hidden'); }
+                const cta = document.getElementById('temoin-image-cta');
+                if (cta) cta.textContent = 'Changer la photo';
+            };
+            reader.readAsDataURL(file);
+
+            if (!editingTemoin) return;
+            const fd = new FormData();
+            fd.append('image', file);
+            try {
+                const r = await fetch(`/api/capteur-temoins/${editingTemoin.id}/image`, {
+                    method: 'POST',
+                    headers: { 'X-CSRF-TOKEN': CSRF },
+                    body: fd,
+                });
+                if (!r.ok) throw new Error();
+                const { image_url } = await r.json();
+                if (prev) prev.src = image_url;
+                editingTemoin.image_url = image_url;
+            } catch { alert("Erreur lors de l'upload de l'image."); }
+        });
+    }
+
     const exportBtn   = document.getElementById('temoin-export-btn');
     exportBtn.classList.add('hidden');
     exportBtn.classList.remove('flex');
@@ -290,9 +341,27 @@ async function saveTemoin() {
         const data = await res.json();
 
         if (!isEdit) {
+            // Upload de l'image si une a été sélectionnée (le témoin vient d'être créé → on a maintenant son id)
+            const imageInput = document.getElementById('temoin-image-input');
+            if (imageInput?.files[0]) {
+                const fd = new FormData();
+                fd.append('image', imageInput.files[0]);
+                try {
+                    const imgRes = await fetch(`/api/capteur-temoins/${data.id}/image`, {
+                        method: 'POST',
+                        headers: { 'X-CSRF-TOKEN': CSRF },
+                        body: fd,
+                    });
+                    if (imgRes.ok) {
+                        const imgData = await imgRes.json();
+                        data.image_url = imgData.image_url;
+                    }
+                } catch { /* non-bloquant */ }
+            }
             addTemoinMarker(data);
         } else {
             editingTemoin.name          = name;
+            editingTemoin.date          = data.date ?? editingTemoin.date;
             editingTemoin.mesures_count += parsedMesures.length;
             temoinsMarkers[editingTemoin.id]?.setPopupContent(popupContent(editingTemoin));
         }
