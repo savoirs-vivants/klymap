@@ -13,7 +13,7 @@ class ParticipantController extends Controller
     public function showJoin()
     {
         if (session()->has('participant')) {
-            return redirect()->route('participant.analyses');
+            return redirect()->route('donnees-campagnes.index');
         }
         return view('participant.join');
     }
