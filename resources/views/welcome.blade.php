@@ -559,7 +559,7 @@
 
             <div class="flex-1 overflow-y-auto px-5 py-4 space-y-5">
 
-                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
                     <div class="bg-slate-50 rounded-xl px-3 py-2.5 border border-slate-100">
                         <p class="text-[9px] font-mono font-bold uppercase tracking-widest text-slate-400 mb-1">Température</p>
                         <p id="valTemp" class="text-sm font-bold text-orange-500">—</p>
@@ -573,16 +573,28 @@
                         <p id="valVent" class="text-sm font-bold text-cyan-500">— <span class="text-[10px] font-normal text-slate-400">km/h</span></p>
                     </div>
                     <div class="bg-slate-50 rounded-xl px-3 py-2.5 border border-slate-100">
-                        <p class="text-[9px] font-mono font-bold uppercase tracking-widest text-slate-400 mb-1">Direction</p>
-                        <p id="valDir" class="text-sm font-bold text-amber-500">— <span class="text-[10px] font-normal text-slate-400"></span></p>
-                    </div>
-                    <div class="bg-slate-50 rounded-xl px-3 py-2.5 border border-slate-100">
                         <p class="text-[9px] font-mono font-bold uppercase tracking-widest text-slate-400 mb-1">Pression</p>
                         <p id="valPress" class="text-sm font-bold text-violet-500">— <span class="text-[10px] font-normal text-slate-400">hPa</span></p>
                     </div>
                     <div class="bg-slate-50 rounded-xl px-3 py-2.5 border border-slate-100">
                         <p class="text-[9px] font-mono font-bold uppercase tracking-widest text-slate-400 mb-1">Pluie</p>
                         <p id="valPluie" class="text-sm font-bold text-emerald-500">— <span class="text-[10px] font-normal text-slate-400">mm</span></p>
+                    </div>
+                    <div class="bg-slate-50 rounded-xl px-3 py-2.5 border border-slate-100">
+                        <p class="text-[9px] font-mono font-bold uppercase tracking-widest text-slate-400 mb-1">Indice de chaleur</p>
+                        <p id="valIndiceChaleur" class="text-sm font-bold text-rose-500">— <span class="text-[10px] font-normal text-slate-400">°C</span></p>
+                    </div>
+                    <div class="bg-slate-50 rounded-xl px-3 py-2.5 border border-slate-100">
+                        <p class="text-[9px] font-mono font-bold uppercase tracking-widest text-slate-400 mb-1">Débit de pluie</p>
+                        <p id="valDebitPluie" class="text-sm font-bold text-sky-500">— <span class="text-[10px] font-normal text-slate-400">mm/h</span></p>
+                    </div>
+                    <div class="bg-slate-50 rounded-xl px-3 py-2.5 border border-slate-100">
+                        <p class="text-[9px] font-mono font-bold uppercase tracking-widest text-slate-400 mb-1">Densité de l'air</p>
+                        <p id="valDensiteAir" class="text-sm font-bold text-indigo-500">— <span class="text-[10px] font-normal text-slate-400">kg/m³</span></p>
+                    </div>
+                    <div class="bg-slate-50 rounded-xl px-3 py-2.5 border border-slate-100">
+                        <p class="text-[9px] font-mono font-bold uppercase tracking-widest text-slate-400 mb-1">Évapotranspiration</p>
+                        <p id="valEvapotranspiration" class="text-sm font-bold text-teal-500">— <span class="text-[10px] font-normal text-slate-400">mm</span></p>
                     </div>
                 </div>
 

@@ -61,7 +61,7 @@ function ecrireSysteme(message) {
 
 // Format des lignes reçues du capteur :
 //   UID:005D003D393650022037374E          → identifiant unique du capteur (clé de lookup en BDD)
-//   1,268435456,21.5,63,12,180,1013,0     → id, timestamp_unix, temp, hum, vitesse_vent, direction_vent, press_baro, pluie
+//   1,268435456,21.5,63,12,1013,0,30.2,5.1,1.2,2.4 → id, timestamp_unix, temp, hum, vitesse_vent, press_baro, pluie, indice_chaleur, debit_pluie, densite_air, evapotranspiration
 function decodeData(line) {
     if (line.startsWith('UID:')) {
         document.getElementById('valUid').innerText = line.substring(4).trim();
@@ -72,9 +72,12 @@ function decodeData(line) {
     if (parts[2] !== undefined) document.getElementById('valTemp').innerText              = parts[2] + ' °C';
     if (parts[3] !== undefined) document.getElementById('valHum').firstChild.textContent  = parts[3] + ' ';
     if (parts[4] !== undefined) document.getElementById('valVent').firstChild.textContent = parts[4] + ' ';
-    if (parts[5] !== undefined) document.getElementById('valDir').firstChild.textContent  = parts[5] + ' ';
-    if (parts[6] !== undefined) document.getElementById('valPress').firstChild.textContent = parts[6] + ' ';
-    if (parts[7] !== undefined) document.getElementById('valPluie').firstChild.textContent = parts[7] + ' ';
+    if (parts[5] !== undefined) document.getElementById('valPress').firstChild.textContent = parts[5] + ' ';
+    if (parts[6] !== undefined) document.getElementById('valPluie').firstChild.textContent = parts[6] + ' ';
+    if (parts[7] !== undefined) document.getElementById('valIndiceChaleur').firstChild.textContent = parts[7] + ' ';
+    if (parts[8] !== undefined) document.getElementById('valDebitPluie').firstChild.textContent = parts[8] + ' ';
+    if (parts[9] !== undefined) document.getElementById('valDensiteAir').firstChild.textContent = parts[9] + ' ';
+    if (parts[10] !== undefined) document.getElementById('valEvapotranspiration').firstChild.textContent = parts[10] + ' ';
 }
 
 // Parse l'intégralité de la console au moment du sync plutôt qu'en mémoire en temps réel.
@@ -106,13 +109,16 @@ function parseLog(logText) {
         seen.add(ts);
 
         lignes.push({
-            timestamp:      ts,
-            temp:           parts[2] !== undefined && parts[2] !== '' ? parseFloat(parts[2]) : null,
-            hum:            parts[3] !== undefined && parts[3] !== '' ? parseFloat(parts[3]) : null,
-            vitesse_vent:   parts[4] !== undefined && parts[4] !== '' ? parseFloat(parts[4]) : null,
-            direction_vent: parts[5] !== undefined && parts[5] !== '' ? parts[5] : null,
-            press_baro:     parts[6] !== undefined && parts[6] !== '' ? parseFloat(parts[6]) : null,
-            pluie:          parts[7] !== undefined && parts[7] !== '' ? parseFloat(parts[7]) : null,
+            timestamp:          ts,
+            temp:               parts[2]  !== undefined && parts[2]  !== '' ? parseFloat(parts[2])  : null,
+            hum:                parts[3]  !== undefined && parts[3]  !== '' ? parseFloat(parts[3])  : null,
+            vitesse_vent:       parts[4]  !== undefined && parts[4]  !== '' ? parseFloat(parts[4])  : null,
+            press_baro:         parts[5]  !== undefined && parts[5]  !== '' ? parseFloat(parts[5])  : null,
+            pluie:              parts[6]  !== undefined && parts[6]  !== '' ? parseFloat(parts[6])  : null,
+            indice_chaleur:     parts[7]  !== undefined && parts[7]  !== '' ? parseFloat(parts[7])  : null,
+            debit_pluie:        parts[8]  !== undefined && parts[8]  !== '' ? parseFloat(parts[8])  : null,
+            densite_air:        parts[9]  !== undefined && parts[9]  !== '' ? parseFloat(parts[9])  : null,
+            evapotranspiration: parts[10] !== undefined && parts[10] !== '' ? parseFloat(parts[10]) : null,
         });
     }
 
@@ -246,15 +252,19 @@ function buildCapteurStationMarker(s) {
     });
     const lines = [
         `<strong>${s.uid ?? s.deveui ?? 'Station #' + s.id}</strong>`,
-        s.temp           != null ? `🌡 ${s.temp} °C` : null,
-        s.hum            != null ? `💧 ${s.hum} %` : null,
-        s.vitesse_vent   != null ? `💨 ${s.vitesse_vent} km/h` : null,
-        s.press_baro     != null ? `📊 ${s.press_baro} hPa` : null,
-        s.pluie          != null ? `🌧 ${s.pluie} mm` : null,
-        s.updated_at     != null ? `<em class="text-slate-400">${s.updated_at}</em>` : null,
+        s.temp               != null ? `🌡 ${s.temp} °C` : null,
+        s.hum                != null ? `💧 ${s.hum} %` : null,
+        s.vitesse_vent       != null ? `💨 ${s.vitesse_vent} km/h` : null,
+        s.press_baro         != null ? `📊 ${s.press_baro} hPa` : null,
+        s.pluie              != null ? `🌧 ${s.pluie} mm` : null,
+        s.indice_chaleur     != null ? `🥵 ${s.indice_chaleur} °C (ressenti)` : null,
+        s.debit_pluie        != null ? `☔ ${s.debit_pluie} mm/h` : null,
+        s.densite_air        != null ? `🌬 ${s.densite_air} kg/m³` : null,
+        s.evapotranspiration != null ? `🌱 ${s.evapotranspiration} mm (évapotranspiration)` : null,
+        s.updated_at         != null ? `<em class="text-slate-400">${s.updated_at}</em>` : null,
         `<a href="${s.show_url}" style="color:#2563eb;font-weight:600;">Voir l'historique →</a>`,
     ].filter(Boolean).join('<br>');
-    window.L.marker([s.lat, s.lng], { icon }).addTo(map).bindPopup(lines, { maxWidth: 220 });
+    window.L.marker([s.lat, s.lng], { icon }).addTo(map).bindPopup(lines, { maxWidth: 240 });
 }
 
 window.openCapteurLocateModal = function (lat, lng) {
