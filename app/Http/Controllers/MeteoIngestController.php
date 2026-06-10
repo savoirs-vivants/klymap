@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Capteur;
+use App\Models\CapteurMeteo;
 use App\Models\Mesure;
 use Illuminate\Http\Request;
 
@@ -33,7 +33,7 @@ class MeteoIngestController extends Controller
         ]);
 
         // Trouver ou créer le capteur via DevEui
-        $capteur = Capteur::firstOrCreate(
+        $capteur = CapteurMeteo::firstOrCreate(
             ['DevEui' => $data['deveui']],
             ['lat' => $data['lat'] ?? null, 'long' => $data['long'] ?? null]
         );

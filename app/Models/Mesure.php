@@ -24,6 +24,6 @@ class Mesure extends Model
 
     public function capteur()
     {
-        return $this->belongsTo(Capteur::class);
+        return $this->belongsTo(CapteurMeteo::class, 'capteur_id');
     }
 }

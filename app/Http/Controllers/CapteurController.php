@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Capteur;
+use App\Models\CapteurMeteo;
 use App\Models\Mesure;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -13,14 +13,14 @@ class CapteurController extends Controller
 {
     public function index()
     {
-        $capteurs = Capteur::with('latestMesure')->get();
+        $capteurs = CapteurMeteo::with('latestMesure')->get();
 
         return view('capteurs.index', compact('capteurs'));
     }
 
     public function mapMarkers(): \Illuminate\Http\JsonResponse
     {
-        $capteurs = Capteur::with('latestMesure')
+        $capteurs = CapteurMeteo::with('latestMesure')
             ->whereNotNull('lat')
             ->whereNotNull('long')
             ->get();
@@ -48,7 +48,7 @@ class CapteurController extends Controller
 
     public function show(int $id)
     {
-        $capteur = Capteur::findOrFail($id);
+        $capteur = CapteurMeteo::findOrFail($id);
 
         $mesures = Mesure::where('capteur_id', $id)
             ->latest()
@@ -62,7 +62,7 @@ class CapteurController extends Controller
 
     public function chartData(int $id, Request $request): \Illuminate\Http\JsonResponse
     {
-        Capteur::findOrFail($id);
+        CapteurMeteo::findOrFail($id);
 
         $limit = min((int) ($request->query('limit', 50)), 2000);
 
@@ -101,7 +101,7 @@ class CapteurController extends Controller
             'UID'       => 'required|string|max:255',
         ]);
 
-        $capteur = Capteur::where('UID', $request->UID)->first();
+        $capteur = CapteurMeteo::where('UID', $request->UID)->first();
 
         if (! $capteur) {
             return back()
@@ -125,7 +125,7 @@ class CapteurController extends Controller
             'long'   => ['required', 'numeric'],
         ]);
 
-        $capteur = Capteur::where('DevEui', $data['DevEui'])->first();
+        $capteur = CapteurMeteo::where('DevEui', $data['DevEui'])->first();
 
         if (! $capteur) {
             return response()->json(['error' => 'Aucun capteur trouvé avec ce DevEui.'], 404);
@@ -164,7 +164,7 @@ class CapteurController extends Controller
         try {
             // firstOrCreate : si le capteur n'existe pas encore, on le crée avec l'UID.
             // lat/long restent null — ils seront renseignés depuis la carte.
-            $capteur = Capteur::firstOrCreate(['UID' => $request->uid]);
+            $capteur = CapteurMeteo::firstOrCreate(['UID' => $request->uid]);
 
             // On charge les timestamps déjà présents en BDD pour ce capteur
             // afin de ne pas réinsérer des mesures existantes (distinct côté serveur).
