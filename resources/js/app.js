@@ -1,6 +1,7 @@
 import './map.js';
 import './password-strength.js';
 import './user-menu.js';
+import './campagne-switcher.js';
 import './backoffice.js';
 import './points.js';
 import './capteurs.js';

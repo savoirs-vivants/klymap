@@ -46,6 +46,10 @@ class CapteurPointController extends Controller
 
         $participant = session('participant');
 
+        $sessionId = $participant
+            ? (($participant['mode_libre'] ?? false) ? null : ($participant['id_session'] ?? null))
+            : session('active_campagne_id');
+
         $point = CapteurPoint::create([
             'user_id'           => Auth::id(),
             'capteur_temoin_id' => $request->capteur_temoin_id,
@@ -55,7 +59,7 @@ class CapteurPointController extends Controller
             'icu_value'         => $request->icu_value,
             'std_dev'           => $request->std_dev,
             'night_overrides'   => $request->night_overrides ?? null,
-            'session_id'        => $participant['id_session'] ?? null,
+            'session_id'        => $sessionId,
             'participant_id'    => $participant['id'] ?? null,
         ]);
 

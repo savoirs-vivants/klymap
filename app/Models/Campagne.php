@@ -38,6 +38,11 @@ class Campagne extends Model
         return $this->hasMany(CapteurPoint::class, 'session_id');
     }
 
+    public function capteurTemoins(): HasMany
+    {
+        return $this->hasMany(CapteurTemoin::class, 'session_id');
+    }
+
     public function isTerminee(): bool
     {
         return $this->date_fin && $this->date_fin->isPast();

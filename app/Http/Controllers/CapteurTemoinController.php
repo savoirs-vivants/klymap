@@ -57,10 +57,11 @@ class CapteurTemoinController extends Controller
         ]);
 
         $temoin = CapteurTemoin::create([
-            'user_id' => Auth::id(),
-            'name'    => $request->name,
-            'lat'     => $request->lat,
-            'lng'     => $request->lng,
+            'user_id'    => Auth::id(),
+            'name'       => $request->name,
+            'lat'        => $request->lat,
+            'lng'        => $request->lng,
+            'session_id' => session('active_campagne_id'),
         ]);
 
         $this->saveMesures($temoin, $request->mesures);

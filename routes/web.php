@@ -37,6 +37,8 @@ Route::get('/code',               [ParticipantController::class, 'showJoin'])->n
 Route::post('/code/valider',      [ParticipantController::class, 'validateCode'])->name('participant.validateCode');
 Route::post('/session/rejoindre', [ParticipantController::class, 'register'])->name('participant.register');
 Route::post('/session/quitter',   [ParticipantController::class, 'logout'])->name('participant.logout');
+Route::post('/session/changer',     [ParticipantController::class, 'changer'])->name('participant.changer');
+Route::post('/session/mode-libre',  [ParticipantController::class, 'toggleModeLibre'])->name('participant.mode-libre');
 
 Route::prefix('api')->name('api.')->group(function () {
     Route::get('/capteur-temoins', [CapteurTemoinController::class, 'index'])->name('temoins.index');
@@ -69,6 +71,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/campagnes/{campagne}/participants', [CampagneController::class, 'participants'])->name('campagne.participants');
     Route::put('/campagnes/{campagne}/terminer', [CampagneController::class, 'terminer'])->name('campagnes.terminer');
     Route::delete('/campagnes/{campagne}',        [CampagneController::class, 'destroy'])->name('campagne.destroy');
+    Route::post('/campagnes/{campagne}/activer', [CampagneController::class, 'activer'])->name('campagne.activer');
+    Route::post('/campagnes/desactiver',         [CampagneController::class, 'desactiver'])->name('campagne.desactiver');
 
     Route::get('/profil',                   [ProfilController::class, 'profil'])->name('profil');
     Route::get('/profil/modifier',          [ProfilController::class, 'edit'])->name('profil.edit');

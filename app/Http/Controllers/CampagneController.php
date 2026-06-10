@@ -106,4 +106,20 @@ class CampagneController extends Controller
 
         return response()->json(['ok' => true]);
     }
+
+    public function activer(Campagne $campagne)
+    {
+        abort_unless($campagne->id_gestionnaire === Auth::id() && ! $campagne->isTerminee(), 403);
+
+        session(['active_campagne_id' => $campagne->id]);
+
+        return response()->json(['ok' => true, 'nom' => $campagne->nom]);
+    }
+
+    public function desactiver()
+    {
+        session()->forget('active_campagne_id');
+
+        return response()->json(['ok' => true]);
+    }
 }

@@ -1,6 +1,6 @@
 @php
     $groupes = $campagne->participants->groupBy('id_groupe')->sortKeys();
-    $nbPoints = $campagne->participants->sum(fn($p) => $p->capteurPoints->count());
+    $nbPoints = $campagne->participants->sum(fn($p) => $p->capteurPoints->count()) + $campagne->capteurPoints->count();
 @endphp
 
 <div class="bg-white rounded-2xl border border-slate-100 shadow-sm mb-4 overflow-hidden">
@@ -84,5 +84,71 @@
             </div>
         </div>
         @endforeach
+    @endif
+
+    {{-- Points placés par le créateur lui-même pendant la campagne --}}
+    @if($campagne->capteurPoints->isNotEmpty())
+        <div class="border-b border-slate-50 last:border-0">
+            <div class="px-5 py-3 bg-white">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-teal-600 mb-3">Mes points</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                    @foreach($campagne->capteurPoints as $point)
+                    @php
+                        $color = match(true) {
+                            $point->icu_value === null => '#94a3b8',
+                            $point->icu_value < 0.5  => '#1e3a8a',
+                            $point->icu_value < 1.0  => '#3b82f6',
+                            $point->icu_value < 1.5  => '#f472b6',
+                            $point->icu_value < 2.0  => '#f97316',
+                            default                  => '#ef4444',
+                        };
+                    @endphp
+                    <button
+                        onclick="window.openPointDetail({{ $point->id }})"
+                        class="flex items-center gap-2.5 px-3 py-2.5 bg-slate-50 hover:bg-teal-50 border border-slate-100 hover:border-teal-200 rounded-xl transition-all text-left group"
+                    >
+                        <div class="w-3.5 h-3.5 rounded-full shrink-0 ring-1 ring-black/10" style="background:{{ $color }}"></div>
+                        <div class="min-w-0">
+                            <p class="text-xs font-semibold text-slate-800 truncate group-hover:text-teal-700">{{ $point->name }}</p>
+                            <p class="text-[10px] text-slate-400">
+                                @if($point->icu_value !== null)
+                                    ICU : <span class="font-bold" style="color:{{ $color }}">{{ $point->icu_value }} °C</span>
+                                    @if($point->std_dev !== null) ± {{ $point->std_dev }} °C @endif
+                                @else
+                                    ICU non calculé
+                                @endif
+                            </p>
+                        </div>
+                        <svg class="w-3.5 h-3.5 text-slate-300 group-hover:text-teal-500 ml-auto shrink-0 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </button>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- Capteurs témoins liés à la campagne --}}
+    @if($campagne->capteurTemoins->isNotEmpty())
+        <div class="border-b border-slate-50 last:border-0">
+            <div class="px-5 py-3 bg-white">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-teal-600 mb-3">Capteurs témoins de la campagne</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                    @foreach($campagne->capteurTemoins as $temoin)
+                    <div class="flex items-center gap-2.5 px-3 py-2.5 bg-slate-50 border border-slate-100 rounded-xl">
+                        <div class="w-3.5 h-3.5 rounded-full shrink-0 ring-1 ring-black/10 bg-slate-900"></div>
+                        <div class="min-w-0 flex-1">
+                            <p class="text-xs font-semibold text-slate-800 truncate">{{ $temoin->name }}</p>
+                            <p class="text-[10px] text-slate-400">
+                                {{ $temoin->date?->format('d/m/Y') ?? 'Date inconnue' }} · {{ $temoin->mesures_count ?? $temoin->mesures()->count() }} mesure(s)
+                            </p>
+                        </div>
+                        @if(!$showGestionnaire)
+                            <a href="{{ route('api.temoins.export', $temoin) }}" class="text-[10px] font-semibold text-teal-600 hover:text-teal-700 shrink-0" title="Exporter">Exporter</a>
+                        @endif
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+        </div>
     @endif
 </div>
