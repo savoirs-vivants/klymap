@@ -14,9 +14,12 @@ class Mesure extends Model
         'temp',
         'hum',
         'vitesse_vent',
-        'direction_vent',
         'press_baro',
         'pluie',
+        'indice_chaleur',
+        'debit_pluie',
+        'densite_air',
+        'evapotranspiration',
     ];
 
     public function capteur()
