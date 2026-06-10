@@ -284,11 +284,17 @@ async function loadPointDetail(id) {
 }
 
 /* ══════════════════ File parsing ══════════════════ */
+// Accepte aussi bien l'ancien format "sht_temp=13.81" (point décimal) que le
+// nouveau format de données traitées "sht_temp 23,55" (sans égal, virgule décimale).
+function parseDecimal(str) {
+    return parseFloat(str.replace(',', '.'));
+}
+
 function parseTxtFile(text) {
     const result = [];
     text.trim().split('\n').forEach((line, i) => {
         const m = line.match(
-            /^\d+\s+(\d{4}\/\d{1,2}\/\d{1,2})\s+(\d{2}:\d{2}:\d{2}).*sht_temp=([\d.]+).*sht_hum=([\d.]+).*tmp_temp=([\d.]+)/
+            /^\d+\s+(\d{4}\/\d{1,2}\/\d{1,2})\s+(\d{2}:\d{2}:\d{2}).*sht_temp[=\s]+([\d.,]+).*sht_hum[=\s]+([\d.,]+).*tmp_temp[=\s]+([\d.,]+)/
         );
         if (!m) return;
         const [, date, time, sht_temp, sht_hum, tmp_temp] = m;
@@ -296,9 +302,9 @@ function parseTxtFile(text) {
         result.push({
             _idx:          i,
             enregistre_le: `${y}-${mo.padStart(2,'0')}-${d.padStart(2,'0')} ${time}`,
-            sht_temp:      parseFloat(sht_temp),
-            sht_hum:       parseFloat(sht_hum),
-            tmp_temp:      parseFloat(tmp_temp),
+            sht_temp:      parseDecimal(sht_temp),
+            sht_hum:       parseDecimal(sht_hum),
+            tmp_temp:      parseDecimal(tmp_temp),
             excluded:      false,
         });
     });
