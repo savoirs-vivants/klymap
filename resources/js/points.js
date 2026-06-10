@@ -436,8 +436,9 @@ function groupByNight(mesures) {
 
 function avg(arr) { return arr.reduce((s, v) => s + v, 0) / arr.length; }
 function stdDev(arr) {
+    if (arr.length < 2) return 0;
     const m = avg(arr);
-    return Math.sqrt(arr.reduce((s, v) => s + (v - m) ** 2, 0) / arr.length);
+    return Math.sqrt(arr.reduce((s, v) => s + (v - m) ** 2, 0) / (arr.length - 1));
 }
 
 function calculateICU(pointData, temoinData, excluded) {
@@ -481,10 +482,10 @@ function calculateICU(pointData, temoinData, excluded) {
             continue;
         }
 
-        const p3   = [...pN].sort((a, b) => a.sht_temp - b.sht_temp).slice(0, 3);
-        const t3   = [...tN].sort((a, b) => a.sht_temp - b.sht_temp).slice(0, 3);
-        const pAvg = avg(p3.map((m) => m.sht_temp));
-        const tAvg = avg(t3.map((m) => m.sht_temp));
+        const p3   = [...pN].sort((a, b) => a.tmp_temp - b.tmp_temp).slice(0, 3);
+        const t3   = [...tN].sort((a, b) => a.tmp_temp - b.tmp_temp).slice(0, 3);
+        const pAvg = avg(p3.map((m) => m.tmp_temp));
+        const tAvg = avg(t3.map((m) => m.tmp_temp));
         const diff = pAvg - tAvg;
 
         results.push({
