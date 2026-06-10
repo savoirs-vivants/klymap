@@ -2,12 +2,15 @@
 
 @php
     $params = [
-        ['key' => 'temp',           'label' => 'Température',     'unit' => '°C',    'color' => 'text-orange-500'],
-        ['key' => 'hum',            'label' => 'Humidité',        'unit' => '%',     'color' => 'text-blue-500'],
-        ['key' => 'vitesse_vent',   'label' => 'Vitesse du vent', 'unit' => 'km/h',  'color' => 'text-cyan-500'],
-        ['key' => 'direction_vent', 'label' => 'Direction du vent', 'unit' => '',    'color' => 'text-amber-500'],
-        ['key' => 'press_baro',     'label' => 'Pression',        'unit' => 'hPa',   'color' => 'text-violet-500'],
-        ['key' => 'pluie',          'label' => 'Pluie',           'unit' => 'mm',    'color' => 'text-emerald-500'],
+        ['key' => 'temp',               'label' => 'Température',        'unit' => '°C',     'color' => 'text-orange-500'],
+        ['key' => 'hum',                'label' => 'Humidité',           'unit' => '%',      'color' => 'text-blue-500'],
+        ['key' => 'vitesse_vent',       'label' => 'Vitesse du vent',    'unit' => 'km/h',   'color' => 'text-cyan-500'],
+        ['key' => 'press_baro',         'label' => 'Pression',           'unit' => 'hPa',    'color' => 'text-violet-500'],
+        ['key' => 'pluie',              'label' => 'Pluie',              'unit' => 'mm',     'color' => 'text-emerald-500'],
+        ['key' => 'indice_chaleur',     'label' => 'Indice de chaleur',  'unit' => '°C',     'color' => 'text-rose-500'],
+        ['key' => 'debit_pluie',        'label' => 'Débit de pluie',     'unit' => 'mm/h',   'color' => 'text-sky-500'],
+        ['key' => 'densite_air',        'label' => 'Densité de l\'air',  'unit' => 'kg/m³',  'color' => 'text-indigo-500'],
+        ['key' => 'evapotranspiration', 'label' => 'Évapotranspiration', 'unit' => 'mm',     'color' => 'text-teal-500'],
     ];
 @endphp
 

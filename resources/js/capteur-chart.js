@@ -20,6 +20,10 @@ document.addEventListener('DOMContentLoaded', function () {
         { key: 'vitesse_vent', label: 'Vitesse du vent (km/h)', color: '#06b6d4', yAxis: 'y' },
         { key: 'press_baro', label: 'Pression (hPa)', color: '#8b5cf6', yAxis: 'yRight' },
         { key: 'pluie', label: 'Pluie (mm)', color: '#10b981', yAxis: 'y' },
+        { key: 'indice_chaleur', label: 'Indice de chaleur (°C)', color: '#f43f5e', yAxis: 'y' },
+        { key: 'debit_pluie', label: 'Débit de pluie (mm/h)', color: '#0ea5e9', yAxis: 'y' },
+        { key: 'densite_air', label: 'Densité de l\'air (kg/m³)', color: '#6366f1', yAxis: 'yRight' },
+        { key: 'evapotranspiration', label: 'Évapotranspiration (mm)', color: '#14b8a6', yAxis: 'y' },
     ];
 
     function buildParams() {

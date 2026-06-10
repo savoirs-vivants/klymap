@@ -3,12 +3,15 @@
 @php
     $titreCapteur = $capteur->UID ?? ('Station #' . $capteur->id);
     $kpis = [
-        ['key' => 'temp',           'label' => 'Température',     'unit' => '°C',   'color' => 'text-orange-500',  'bg' => 'bg-orange-50',  'border' => 'border-orange-100'],
-        ['key' => 'hum',            'label' => 'Humidité',        'unit' => '%',    'color' => 'text-blue-500',    'bg' => 'bg-blue-50',    'border' => 'border-blue-100'],
-        ['key' => 'vitesse_vent',   'label' => 'Vitesse du vent', 'unit' => 'km/h', 'color' => 'text-cyan-500',    'bg' => 'bg-cyan-50',    'border' => 'border-cyan-100'],
-        ['key' => 'direction_vent', 'label' => 'Direction du vent', 'unit' => '',   'color' => 'text-amber-500',   'bg' => 'bg-amber-50',   'border' => 'border-amber-100'],
-        ['key' => 'press_baro',     'label' => 'Pression',        'unit' => 'hPa',  'color' => 'text-violet-500',  'bg' => 'bg-violet-50',  'border' => 'border-violet-100'],
-        ['key' => 'pluie',          'label' => 'Pluie',           'unit' => 'mm',   'color' => 'text-emerald-500', 'bg' => 'bg-emerald-50', 'border' => 'border-emerald-100'],
+        ['key' => 'temp',               'label' => 'Température',        'unit' => '°C',    'color' => 'text-orange-500',  'bg' => 'bg-orange-50',  'border' => 'border-orange-100'],
+        ['key' => 'hum',                'label' => 'Humidité',           'unit' => '%',     'color' => 'text-blue-500',    'bg' => 'bg-blue-50',    'border' => 'border-blue-100'],
+        ['key' => 'vitesse_vent',       'label' => 'Vitesse du vent',    'unit' => 'km/h',  'color' => 'text-cyan-500',    'bg' => 'bg-cyan-50',    'border' => 'border-cyan-100'],
+        ['key' => 'press_baro',         'label' => 'Pression',           'unit' => 'hPa',   'color' => 'text-violet-500',  'bg' => 'bg-violet-50',  'border' => 'border-violet-100'],
+        ['key' => 'pluie',              'label' => 'Pluie',              'unit' => 'mm',    'color' => 'text-emerald-500', 'bg' => 'bg-emerald-50', 'border' => 'border-emerald-100'],
+        ['key' => 'indice_chaleur',     'label' => 'Indice de chaleur',  'unit' => '°C',    'color' => 'text-rose-500',    'bg' => 'bg-rose-50',    'border' => 'border-rose-100'],
+        ['key' => 'debit_pluie',        'label' => 'Débit de pluie',     'unit' => 'mm/h',  'color' => 'text-sky-500',     'bg' => 'bg-sky-50',     'border' => 'border-sky-100'],
+        ['key' => 'densite_air',        'label' => 'Densité de l\'air',  'unit' => 'kg/m³', 'color' => 'text-indigo-500',  'bg' => 'bg-indigo-50',  'border' => 'border-indigo-100'],
+        ['key' => 'evapotranspiration', 'label' => 'Évapotranspiration', 'unit' => 'mm',    'color' => 'text-teal-500',    'bg' => 'bg-teal-50',    'border' => 'border-teal-100'],
     ];
     $derniere = $mesures->first();
 @endphp
@@ -26,7 +29,7 @@
          data-export-url="{{ route('capteurs.export', $capteur->id) }}">
     </div>
 
-    <div class="grid grid-cols-2 lg:grid-cols-6 gap-4 mb-6">
+    <div class="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
         @foreach ($kpis as $k)
         @php $val = $derniere?->{$k['key']}; @endphp
         <div class="bg-white rounded-2xl border border-slate-100 shadow-[0_2px_12px_rgba(34,42,96,0.06)] p-4">
@@ -162,9 +165,12 @@
                             <th class="pb-3 pr-4">Température</th>
                             <th class="pb-3 pr-4">Humidité</th>
                             <th class="pb-3 pr-4">Vent</th>
-                            <th class="pb-3 pr-4">Direction</th>
                             <th class="pb-3 pr-4">Pression</th>
-                            <th class="pb-3">Pluie</th>
+                            <th class="pb-3 pr-4">Pluie</th>
+                            <th class="pb-3 pr-4">Indice de chaleur</th>
+                            <th class="pb-3 pr-4">Débit de pluie</th>
+                            <th class="pb-3 pr-4">Densité de l'air</th>
+                            <th class="pb-3">Évapotranspiration</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-50">
@@ -174,9 +180,12 @@
                             <td class="py-3 pr-4 font-mono font-semibold text-orange-500">{{ $m->temp ?? '—' }} <span class="text-[10px] text-slate-400 font-normal">°C</span></td>
                             <td class="py-3 pr-4 font-mono font-semibold text-blue-500">{{ $m->hum ?? '—' }} <span class="text-[10px] text-slate-400 font-normal">%</span></td>
                             <td class="py-3 pr-4 font-mono text-cyan-600">{{ $m->vitesse_vent ?? '—' }} <span class="text-[10px] text-slate-400 font-normal">km/h</span></td>
-                            <td class="py-3 pr-4 font-mono text-amber-600">{{ $m->direction_vent ?? '—' }}</td>
                             <td class="py-3 pr-4 font-mono text-violet-600">{{ $m->press_baro ?? '—' }} <span class="text-[10px] text-slate-400 font-normal">hPa</span></td>
-                            <td class="py-3 font-mono text-emerald-600">{{ $m->pluie ?? '—' }} <span class="text-[10px] text-slate-400 font-normal">mm</span></td>
+                            <td class="py-3 pr-4 font-mono text-emerald-600">{{ $m->pluie ?? '—' }} <span class="text-[10px] text-slate-400 font-normal">mm</span></td>
+                            <td class="py-3 pr-4 font-mono text-rose-600">{{ $m->indice_chaleur ?? '—' }} <span class="text-[10px] text-slate-400 font-normal">°C</span></td>
+                            <td class="py-3 pr-4 font-mono text-sky-600">{{ $m->debit_pluie ?? '—' }} <span class="text-[10px] text-slate-400 font-normal">mm/h</span></td>
+                            <td class="py-3 pr-4 font-mono text-indigo-600">{{ $m->densite_air ?? '—' }} <span class="text-[10px] text-slate-400 font-normal">kg/m³</span></td>
+                            <td class="py-3 font-mono text-teal-600">{{ $m->evapotranspiration ?? '—' }} <span class="text-[10px] text-slate-400 font-normal">mm</span></td>
                         </tr>
                         @endforeach
                     </tbody>
