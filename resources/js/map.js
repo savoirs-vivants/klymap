@@ -72,9 +72,22 @@ document.addEventListener('DOMContentLoaded', () => {
     if (cityInput && resultsList) {
         let debounceTimer = null;
         let currentResults = [];
+        let searchMarker = null;
 
         const goTo = (item) => {
-            map.setView([parseFloat(item.lat), parseFloat(item.lon)], 13);
+            const lat = parseFloat(item.lat);
+            const lon = parseFloat(item.lon);
+
+            if (item.boundingbox) {
+                const [south, north, west, east] = item.boundingbox.map(parseFloat);
+                map.fitBounds([[south, west], [north, east]], { maxZoom: 16 });
+            } else {
+                map.setView([lat, lon], 13);
+            }
+
+            if (searchMarker) searchMarker.remove();
+            searchMarker = window.L.marker([lat, lon]).addTo(map);
+
             cityInput.value = item.display_name.split(',').slice(0, 2).join(',').trim();
             resultsList.classList.add('hidden');
             resultsList.innerHTML = '';
