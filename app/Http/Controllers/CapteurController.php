@@ -31,12 +31,15 @@ class CapteurController extends Controller
                 'uid'            => $c->UID,
                 'lat'            => (float) $c->lat,
                 'lng'            => (float) $c->long,
-                'temp'           => $c->latestMesure?->temp,
-                'hum'            => $c->latestMesure?->hum,
-                'vitesse_vent'   => $c->latestMesure?->vitesse_vent,
-                'direction_vent' => $c->latestMesure?->direction_vent,
-                'press_baro'     => $c->latestMesure?->press_baro,
-                'pluie'          => $c->latestMesure?->pluie,
+                'temp'               => $c->latestMesure?->temp,
+                'hum'                => $c->latestMesure?->hum,
+                'vitesse_vent'       => $c->latestMesure?->vitesse_vent,
+                'press_baro'         => $c->latestMesure?->press_baro,
+                'pluie'              => $c->latestMesure?->pluie,
+                'indice_chaleur'     => $c->latestMesure?->indice_chaleur,
+                'debit_pluie'        => $c->latestMesure?->debit_pluie,
+                'densite_air'        => $c->latestMesure?->densite_air,
+                'evapotranspiration' => $c->latestMesure?->evapotranspiration,
                 'updated_at'     => $c->latestMesure?->created_at?->diffForHumans(),
                 'show_url'       => route('capteurs.show', $c->id),
             ])
@@ -76,14 +79,17 @@ class CapteurController extends Controller
         $query = $query->latest()->limit($limit)->get()->sortBy('created_at')->values();
 
         return response()->json([
-            'labels'         => $query->map(fn ($m) => $m->created_at->format('d/m H:i')),
-            'temp'           => $query->pluck('temp'),
-            'hum'            => $query->pluck('hum'),
-            'vitesse_vent'   => $query->pluck('vitesse_vent'),
-            'direction_vent' => $query->pluck('direction_vent'),
-            'press_baro'     => $query->pluck('press_baro'),
-            'pluie'          => $query->pluck('pluie'),
-            'count'          => $query->count(),
+            'labels'             => $query->map(fn ($m) => $m->created_at->format('d/m H:i')),
+            'temp'               => $query->pluck('temp'),
+            'hum'                => $query->pluck('hum'),
+            'vitesse_vent'       => $query->pluck('vitesse_vent'),
+            'press_baro'         => $query->pluck('press_baro'),
+            'pluie'              => $query->pluck('pluie'),
+            'indice_chaleur'     => $query->pluck('indice_chaleur'),
+            'debit_pluie'        => $query->pluck('debit_pluie'),
+            'densite_air'        => $query->pluck('densite_air'),
+            'evapotranspiration' => $query->pluck('evapotranspiration'),
+            'count'              => $query->count(),
         ]);
     }
 
@@ -134,12 +140,15 @@ class CapteurController extends Controller
             'deveui'         => $capteur->DevEui,
             'lat'            => (float) $capteur->lat,
             'lng'            => (float) $capteur->long,
-            'temp'           => $capteur->latestMesure?->temp,
-            'hum'            => $capteur->latestMesure?->hum,
-            'vitesse_vent'   => $capteur->latestMesure?->vitesse_vent,
-            'direction_vent' => $capteur->latestMesure?->direction_vent,
-            'press_baro'     => $capteur->latestMesure?->press_baro,
-            'pluie'          => $capteur->latestMesure?->pluie,
+            'temp'               => $capteur->latestMesure?->temp,
+            'hum'                => $capteur->latestMesure?->hum,
+            'vitesse_vent'       => $capteur->latestMesure?->vitesse_vent,
+            'press_baro'         => $capteur->latestMesure?->press_baro,
+            'pluie'              => $capteur->latestMesure?->pluie,
+            'indice_chaleur'     => $capteur->latestMesure?->indice_chaleur,
+            'debit_pluie'        => $capteur->latestMesure?->debit_pluie,
+            'densite_air'        => $capteur->latestMesure?->densite_air,
+            'evapotranspiration' => $capteur->latestMesure?->evapotranspiration,
             'updated_at'     => $capteur->latestMesure?->created_at?->diffForHumans(),
             'show_url'       => route('capteurs.show', $capteur->id),
         ]);
@@ -177,15 +186,18 @@ class CapteurController extends Controller
                 $date = Carbon::createFromTimestamp($ts)->toDateTimeString();
 
                 $toInsert[] = [
-                    'capteur_id'     => $capteur->id,
-                    'temp'           => isset($ligne['temp'])         ? (float) $ligne['temp']         : null,
-                    'hum'            => isset($ligne['hum'])          ? (float) $ligne['hum']          : null,
-                    'vitesse_vent'   => isset($ligne['vitesse_vent']) ? (float) $ligne['vitesse_vent'] : null,
-                    'direction_vent' => $ligne['direction_vent']      ?? null,
-                    'press_baro'     => isset($ligne['press_baro'])   ? (float) $ligne['press_baro']   : null,
-                    'pluie'          => isset($ligne['pluie'])        ? (float) $ligne['pluie']        : null,
-                    'created_at'     => $date,
-                    'updated_at'     => $now,
+                    'capteur_id'         => $capteur->id,
+                    'temp'               => isset($ligne['temp'])               ? (float) $ligne['temp']               : null,
+                    'hum'                => isset($ligne['hum'])                ? (float) $ligne['hum']                : null,
+                    'vitesse_vent'       => isset($ligne['vitesse_vent'])       ? (float) $ligne['vitesse_vent']       : null,
+                    'press_baro'         => isset($ligne['press_baro'])         ? (float) $ligne['press_baro']         : null,
+                    'pluie'              => isset($ligne['pluie'])              ? (float) $ligne['pluie']              : null,
+                    'indice_chaleur'     => isset($ligne['indice_chaleur'])     ? (float) $ligne['indice_chaleur']     : null,
+                    'debit_pluie'        => isset($ligne['debit_pluie'])        ? (float) $ligne['debit_pluie']        : null,
+                    'densite_air'        => isset($ligne['densite_air'])        ? (float) $ligne['densite_air']        : null,
+                    'evapotranspiration' => isset($ligne['evapotranspiration']) ? (float) $ligne['evapotranspiration'] : null,
+                    'created_at'         => $date,
+                    'updated_at'         => $now,
                 ];
 
                 if ($ts > $latestTs) {
@@ -202,12 +214,15 @@ class CapteurController extends Controller
             // Mise à jour du capteur avec les valeurs de la mesure la plus récente
             if ($latestLigne) {
                 $capteur->update([
-                    'temp'           => isset($latestLigne['temp'])         ? (float) $latestLigne['temp']         : $capteur->getRawOriginal('temp'),
-                    'hum'            => isset($latestLigne['hum'])          ? (float) $latestLigne['hum']          : $capteur->getRawOriginal('hum'),
-                    'vitesse_vent'   => isset($latestLigne['vitesse_vent']) ? (float) $latestLigne['vitesse_vent'] : $capteur->getRawOriginal('vitesse_vent'),
-                    'direction_vent' => $latestLigne['direction_vent']      ?? $capteur->getRawOriginal('direction_vent'),
-                    'press_baro'     => isset($latestLigne['press_baro'])   ? (float) $latestLigne['press_baro']   : $capteur->getRawOriginal('press_baro'),
-                    'pluie'          => isset($latestLigne['pluie'])        ? (float) $latestLigne['pluie']        : $capteur->getRawOriginal('pluie'),
+                    'temp'               => isset($latestLigne['temp'])               ? (float) $latestLigne['temp']               : $capteur->getRawOriginal('temp'),
+                    'hum'                => isset($latestLigne['hum'])                ? (float) $latestLigne['hum']                : $capteur->getRawOriginal('hum'),
+                    'vitesse_vent'       => isset($latestLigne['vitesse_vent'])       ? (float) $latestLigne['vitesse_vent']       : $capteur->getRawOriginal('vitesse_vent'),
+                    'press_baro'         => isset($latestLigne['press_baro'])         ? (float) $latestLigne['press_baro']         : $capteur->getRawOriginal('press_baro'),
+                    'pluie'              => isset($latestLigne['pluie'])              ? (float) $latestLigne['pluie']              : $capteur->getRawOriginal('pluie'),
+                    'indice_chaleur'     => isset($latestLigne['indice_chaleur'])     ? (float) $latestLigne['indice_chaleur']     : $capteur->getRawOriginal('indice_chaleur'),
+                    'debit_pluie'        => isset($latestLigne['debit_pluie'])        ? (float) $latestLigne['debit_pluie']        : $capteur->getRawOriginal('debit_pluie'),
+                    'densite_air'        => isset($latestLigne['densite_air'])        ? (float) $latestLigne['densite_air']        : $capteur->getRawOriginal('densite_air'),
+                    'evapotranspiration' => isset($latestLigne['evapotranspiration']) ? (float) $latestLigne['evapotranspiration'] : $capteur->getRawOriginal('evapotranspiration'),
                 ]);
             }
 
@@ -236,10 +251,10 @@ class CapteurController extends Controller
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Mesures Capteur ' . $id);
 
-        $headers = ['Date & Heure', 'Température (°C)', 'Humidité (%)', 'Vitesse du vent (km/h)', 'Direction du vent', 'Pression (hPa)', 'Pluie (mm)'];
+        $headers = ['Date & Heure', 'Température (°C)', 'Humidité (%)', 'Vitesse du vent (km/h)', 'Pression (hPa)', 'Pluie (mm)', 'Indice de chaleur (°C)', 'Débit de pluie (mm/h)', 'Densité de l\'air (kg/m³)', 'Évapotranspiration (mm)'];
         $sheet->fromArray($headers, NULL, 'A1');
-        $sheet->getStyle('A1:G1')->getFont()->setBold(true);
-        $sheet->getStyle('A1:G1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('E2E8F0');
+        $sheet->getStyle('A1:J1')->getFont()->setBold(true);
+        $sheet->getStyle('A1:J1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('E2E8F0');
 
         $row = 2;
         foreach ($mesuresRaw as $m) {
@@ -250,15 +265,18 @@ class CapteurController extends Controller
                 $m->temp ?? null,
                 $m->hum ?? null,
                 $m->vitesse_vent ?? null,
-                $m->direction_vent ?? null,
                 $m->press_baro ?? null,
                 $m->pluie ?? null,
+                $m->indice_chaleur ?? null,
+                $m->debit_pluie ?? null,
+                $m->densite_air ?? null,
+                $m->evapotranspiration ?? null,
             ], NULL, 'A' . $row);
 
             $row++;
         }
 
-        foreach (range('A', 'G') as $col) {
+        foreach (range('A', 'J') as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 
