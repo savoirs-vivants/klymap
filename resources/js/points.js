@@ -1147,8 +1147,13 @@ document.addEventListener('klymap:ready', () => {
     if (document.body.dataset.auth !== '1') return;
 
     window._klymapInstance.on('click', (e) => {
-        if (window._placementMode) return;
-        onMapClickPoint(e.latlng);
+        if (window._placementMode) {
+            if (window._placementMode === 'point') {
+                window.cancelPlacementMode();
+                onMapClickPoint(e.latlng);
+            }
+            return;
+        }
     });
 });
 

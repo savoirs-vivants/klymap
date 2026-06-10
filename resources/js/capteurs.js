@@ -36,6 +36,8 @@ window.activatePlacementMode = function (type) {
     const msg = document.getElementById('placement-message');
     if (msg) msg.textContent = type === 'capteur'
         ? 'Cliquez sur la carte pour placer le capteur'
+        : type === 'point'
+        ? 'Cliquez sur la carte pour placer le capteur urbain'
         : 'Cliquez sur la carte pour placer le capteur témoin';
 
     if (window._klymapInstance) {

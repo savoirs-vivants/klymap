@@ -73,16 +73,33 @@
                     @endauth
                 </div>
 
+                @if (auth()->check() || session()->has('participant'))
+                <div class="flex items-center justify-between">
+                    <div class="group flex items-center gap-3 text-left rounded-lg p-2">
+                        <div class="w-4 h-4 rounded-full bg-teal-400 shadow-sm ring-1 ring-white/20 shrink-0"></div>
+                        <span class="text-sm font-medium text-white">Capteurs Urbains</span>
+                    </div>
+                    <button onclick="window.activatePlacementMode('point')"
+                        class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-700 hover:bg-teal-600 text-teal-200 hover:text-white text-xs font-semibold transition-colors shrink-0 shadow-sm"
+                        title="Placer un capteur urbain sur la carte">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Ajouter
+                    </button>
+                </div>
+                @endif
+
                 @if (auth()->check() && auth()->user()->isAdmin())
                 <div class="flex items-center justify-between">
                     <button onclick="window.toggleMapFilter ? window.toggleMapFilter(this, 'capteur', null) : null"
                         class="legend-filter group flex items-center gap-3 text-left transition-all outline-none rounded-lg p-2 hover:bg-teal-700/50">
                         <div class="w-4 h-4 rounded-full bg-blue-500 shadow-sm ring-1 ring-white/20 shrink-0 transition-transform group-hover:scale-110"></div>
-                        <span class="text-sm font-medium text-white transition-colors">Capteurs</span>
+                        <span class="text-sm font-medium text-white transition-colors">Stations météo</span>
                     </button>
                     <button onclick="window.activatePlacementMode('capteur')"
                         class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-700 hover:bg-teal-600 text-teal-200 hover:text-white text-xs font-semibold transition-colors shrink-0 shadow-sm"
-                        title="Localiser un capteur sur la carte">
+                        title="Localiser une station météo sur la carte">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                         </svg>
@@ -99,8 +116,8 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <p class="text-[11px] text-teal-200/80 leading-relaxed">Cliquez sur la carte pour placer un <strong
-                            class="text-teal-100">point de mesure</strong> et calculer l'ICU.</p>
+                    <p class="text-[11px] text-teal-200/80 leading-relaxed">Cliquez sur <strong
+                            class="text-teal-100">Ajouter</strong> puis sur la carte pour placer un capteur urbain et calculer l'ICU.</p>
                 </div>
             @endif
         </div>
