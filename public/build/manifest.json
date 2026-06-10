@@ -172,7 +172,7 @@
     "src": "node_modules/@fontsource/space-mono/files/space-mono-vietnamese-700-normal.woff2"
   },
   "resources/css/app.css": {
-    "file": "assets/app-BHSfrzbn.css",
+    "file": "assets/app-C1rx_RiL.css",
     "name": "app",
     "names": [
       "app.css"
@@ -213,7 +213,7 @@
     ]
   },
   "resources/js/app.js": {
-    "file": "assets/app-NEyNBJ9c.js",
+    "file": "assets/app-JlGfmrc3.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true
