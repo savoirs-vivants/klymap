@@ -12,6 +12,7 @@ use App\Http\Controllers\DonneesCampagnesController;
 use App\Http\Controllers\ParticipantController;
 use App\Http\Controllers\ProfilController;
 use App\Http\Controllers\CapteurController;
+use App\Http\Controllers\ComparaisonIcuController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn() => view('welcome'))->name('home');
@@ -51,6 +52,7 @@ Route::prefix('api')->name('api.')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', fn() => view('welcome'))->name('dashboard');
     Route::get('/comparaison-icu', fn() => view('comparaison-icu'))->name('comparaison-icu');
+    Route::post('/comparaison-icu/export', [ComparaisonIcuController::class, 'export'])->name('comparaison-icu.export');
     Route::post('/deconnexion', [LoginController::class, 'destroy'])->name('logout');
 
     Route::prefix('api')->name('api.')->group(function () {
