@@ -29,13 +29,6 @@ return new class extends Migration
             $table->float('evapotranspiration')->nullable();
             $table->timestamps();
         });
-
-        // `mesures.capteur_id` référence désormais `capteurs_meteo` (les nouveaux capteurs
-        // ne seront créés que dans capteurs_meteo).
-        Schema::table('mesures', function (Blueprint $table) {
-            $table->dropForeign(['capteur_id']);
-            $table->foreign('capteur_id')->references('id')->on('capteurs_meteo')->onDelete('cascade');
-        });
     }
 
     /**
