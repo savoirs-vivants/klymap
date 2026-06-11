@@ -30,13 +30,6 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // Duplication des données existantes de `capteurs` vers `capteurs_meteo`
-        DB::statement('
-            INSERT INTO capteurs_meteo (id, UID, DevEui, lat, `long`, temp, hum, vitesse_vent, press_baro, pluie, indice_chaleur, debit_pluie, densite_air, evapotranspiration, created_at, updated_at)
-            SELECT id, UID, DevEui, lat, `long`, temp, hum, vitesse_vent, press_baro, pluie, indice_chaleur, debit_pluie, densite_air, evapotranspiration, created_at, updated_at
-            FROM capteurs
-        ');
-
         // `mesures.capteur_id` référence désormais `capteurs_meteo` (les nouveaux capteurs
         // ne seront créés que dans capteurs_meteo).
         Schema::table('mesures', function (Blueprint $table) {
