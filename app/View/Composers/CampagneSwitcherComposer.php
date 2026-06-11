@@ -30,10 +30,9 @@ class CampagneSwitcherComposer
         }
 
         $view->with([
-            'creatorCampagnes'    => $creatorCampagnes,
-            'activeCampagneId'    => $activeCampagneId,
-            'participantSessions' => session('participant_sessions', []),
-            'activeParticipant'   => session('participant'),
+            'creatorCampagnes'  => $creatorCampagnes,
+            'activeCampagneId'  => $activeCampagneId,
+            'activeParticipant' => session('participant'),
         ]);
     }
 }

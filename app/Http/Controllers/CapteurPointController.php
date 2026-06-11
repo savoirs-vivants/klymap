@@ -47,7 +47,7 @@ class CapteurPointController extends Controller
         $participant = session('participant');
 
         $sessionId = $participant
-            ? (($participant['mode_libre'] ?? false) ? null : ($participant['id_session'] ?? null))
+            ? ($participant['id_session'] ?? null)
             : session('active_campagne_id');
 
         $point = CapteurPoint::create([
@@ -126,6 +126,7 @@ class CapteurPointController extends Controller
             'icu_value'       => $request->icu_value,
             'std_dev'         => $request->std_dev,
             'night_overrides' => $request->has('night_overrides') ? $request->night_overrides : $capteurPoint->night_overrides,
+            'icu_ack'         => (float) $request->std_dev === (float) $capteurPoint->std_dev ? $capteurPoint->icu_ack : false,
         ];
         if ($request->filled('capteur_temoin_id')) {
             $update['capteur_temoin_id'] = $request->capteur_temoin_id;
@@ -149,6 +150,15 @@ class CapteurPointController extends Controller
         $capteurPoint->load(['user', 'capteurTemoin', 'participant']);
 
         return response()->json($this->pointResource($capteurPoint));
+    }
+
+    public function ackIcu(CapteurPoint $capteurPoint)
+    {
+        $this->authorize($capteurPoint);
+
+        $capteurPoint->update(['icu_ack' => true]);
+
+        return response()->json(['ok' => true]);
     }
 
     public function destroy(CapteurPoint $capteurPoint)
@@ -188,6 +198,7 @@ class CapteurPointController extends Controller
             'lng'            => (float) $p->lng,
             'icu_value'      => $p->icu_value !== null ? (float) $p->icu_value : null,
             'std_dev'        => $p->std_dev !== null ? (float) $p->std_dev : null,
+            'icu_ack'        => $p->icu_ack,
             'temoin_name'    => $p->capteurTemoin?->name,
             'temoin_id'      => $p->capteur_temoin_id,
             'user_name'      => $p->user

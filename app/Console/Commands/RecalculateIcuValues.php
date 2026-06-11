@@ -44,6 +44,11 @@ class RecalculateIcuValues extends Command
         return self::SUCCESS;
     }
 
+    private function effectiveTemp($mesure): float
+    {
+        return (float) $mesure->tmp_temp >= 327 ? (float) $mesure->sht_temp : (float) $mesure->tmp_temp;
+    }
+
     private function isNightWindow($enregistreLe): bool
     {
         $h = $enregistreLe->hour;
@@ -100,11 +105,11 @@ class RecalculateIcuValues extends Command
                 $pAvg = (float) $override['pAvg'];
                 $tAvg = (float) $override['tAvg'];
             } else {
-                $p3 = collect($pN)->sortBy(fn ($m) => (float) $m->tmp_temp)->take(3);
-                $t3 = collect($tN)->sortBy(fn ($m) => (float) $m->tmp_temp)->take(3);
+                $p3 = collect($pN)->sortBy(fn ($m) => $this->effectiveTemp($m))->take(3);
+                $t3 = collect($tN)->sortBy(fn ($m) => $this->effectiveTemp($m))->take(3);
 
-                $pAvg = $p3->avg(fn ($m) => (float) $m->tmp_temp);
-                $tAvg = $t3->avg(fn ($m) => (float) $m->tmp_temp);
+                $pAvg = $p3->avg(fn ($m) => $this->effectiveTemp($m));
+                $tAvg = $t3->avg(fn ($m) => $this->effectiveTemp($m));
             }
 
             $diffs[] = $pAvg - $tAvg;

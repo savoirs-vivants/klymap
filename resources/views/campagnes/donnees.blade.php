@@ -63,9 +63,15 @@
                             <p id="icu-nights-val" class="text-3xl font-black text-slate-900">—</p>
                         </div>
                     </div>
-                    <div id="icu-reliability" class="hidden mb-4 flex items-start gap-3 px-4 py-3 rounded-xl text-sm font-medium border">
-                        <svg id="icu-rel-icon" class="w-5 h-5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"></svg>
-                        <span id="icu-rel-text"></span>
+                    <div id="icu-reliability" class="hidden mb-4 flex flex-col items-start gap-3 px-4 py-3 rounded-xl text-sm font-medium border">
+                        <div class="flex items-start gap-3">
+                            <svg id="icu-rel-icon" class="w-5 h-5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"></svg>
+                            <span id="icu-rel-text"></span>
+                        </div>
+                        <button type="button" id="btn-icu-ack"
+                            class="hidden ml-8 px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-semibold transition-colors">
+                            Je valide avoir vu l'erreur
+                        </button>
                     </div>
                     <div class="bg-slate-50 rounded-xl p-4 border border-slate-100 mb-4">
                         <p class="text-xs font-semibold text-slate-500 mb-1">ICU par nuit — moyenne ± écart-type (2h–8h)</p>

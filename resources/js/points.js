@@ -314,7 +314,7 @@ function isNightWindow(enregistre_le) {
 function detectFlags(mesures) {
     const night        = mesures.filter((m) => isNightWindow(m.enregistre_le));
     const flagHum      = night.filter((m) => m.sht_hum > 95);
-    const flagTempDiff = night.filter((m) => Math.abs(m.sht_temp - m.tmp_temp) > 3);
+    const flagTempDiff = night.filter((m) => m.tmp_temp < 327 && Math.abs(m.sht_temp - m.tmp_temp) > 3);
     return { flagHum, flagTempDiff };
 }
 
@@ -434,6 +434,9 @@ function groupByNight(mesures) {
     return groups;
 }
 
+// Si tmp_temp vaut ~327 (valeur capteur erronée, ex: 327.67), on retombe sur sht_temp
+function effectiveTemp(m) { return m.tmp_temp >= 327 ? m.sht_temp : m.tmp_temp; }
+
 function avg(arr) { return arr.reduce((s, v) => s + v, 0) / arr.length; }
 function stdDev(arr) {
     if (arr.length < 2) return 0;
@@ -482,17 +485,19 @@ function calculateICU(pointData, temoinData, excluded) {
             continue;
         }
 
-        const p3   = [...pN].sort((a, b) => a.tmp_temp - b.tmp_temp).slice(0, 3);
-        const t3   = [...tN].sort((a, b) => a.tmp_temp - b.tmp_temp).slice(0, 3);
-        const pAvg = avg(p3.map((m) => m.tmp_temp));
-        const tAvg = avg(t3.map((m) => m.tmp_temp));
+        const p3   = [...pN].sort((a, b) => effectiveTemp(a) - effectiveTemp(b)).slice(0, 3);
+        const t3   = [...tN].sort((a, b) => effectiveTemp(a) - effectiveTemp(b)).slice(0, 3);
+        const pAvg = avg(p3.map(effectiveTemp));
+        const tAvg = avg(t3.map(effectiveTemp));
         const diff = pAvg - tAvg;
+        const usedShtTemp = [...p3, ...t3].some((m) => m.tmp_temp >= 327);
 
         results.push({
             night,
             diff: Math.round(diff * 100) / 100,
             pAvg: Math.round(pAvg * 100) / 100,
             tAvg: Math.round(tAvg * 100) / 100,
+            usedShtTemp,
             p3, t3,
         });
     }
@@ -680,7 +685,8 @@ function renderICUSummary(result) {
     document.getElementById('icu-stddev-val').textContent = result.globalStd;
     document.getElementById('icu-nights-val').textContent = result.results.length;
 
-    const rel = document.getElementById('icu-reliability');
+    const rel    = document.getElementById('icu-reliability');
+    const ackBtn = document.getElementById('btn-icu-ack');
     rel.classList.remove('hidden', 'bg-green-50', 'border-green-200', 'text-green-800', 'bg-red-50', 'border-red-200', 'text-red-800', 'flex');
     rel.classList.add('flex');
 
@@ -688,10 +694,47 @@ function renderICUSummary(result) {
         rel.classList.add('bg-green-50', 'border-green-200', 'text-green-800');
         document.getElementById('icu-rel-icon').innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>';
         document.getElementById('icu-rel-text').textContent = `Donnée fiable — écart-type de ${result.globalStd} °C (≤ 0,5 °C).`;
+        ackBtn.classList.add('hidden');
     } else {
         rel.classList.add('bg-red-50', 'border-red-200', 'text-red-800');
         document.getElementById('icu-rel-icon').innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>';
         document.getElementById('icu-rel-text').textContent = `Vérification manuelle recommandée — écart-type de ${result.globalStd} °C (> 0,5 °C).`;
+
+        if (editingPoint && !editingPoint.icu_ack) {
+            ackBtn.classList.remove('hidden');
+            ackBtn.disabled = false;
+            ackBtn.textContent = "Je valide avoir vu l'erreur";
+            ackBtn.onclick = () => acknowledgeIcuAlert(ackBtn);
+        } else {
+            ackBtn.classList.add('hidden');
+        }
+    }
+}
+
+async function acknowledgeIcuAlert(btn) {
+    if (!editingPoint) return;
+    btn.disabled = true;
+    try {
+        const res = await fetch(`/api/capteur-points/${editingPoint.id}/ack-icu`, {
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': CSRF },
+        });
+        if (!res.ok) throw new Error(await res.text());
+
+        editingPoint.icu_ack = true;
+        btn.classList.add('hidden');
+
+        const marker = pointsOnMap[editingPoint.id];
+        if (marker) {
+            const merged = { ...marker.pointData, icu_ack: true };
+            marker.pointData = merged;
+            marker.setIcon(buildPointIcon(merged));
+            marker.setPopupContent(pointPopupContent(merged));
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Erreur lors de la validation.");
+        btn.disabled = false;
     }
 }
 
@@ -1009,7 +1052,7 @@ window.deletePoint = async function (id) {
 function buildPointIcon(p) {
     const color = icuColor(p.icu_value);
     const isAuth = document.body.dataset.auth === '1';
-    const needsVerification = isAuth && p.std_dev !== null && p.std_dev > 0.5;
+    const needsVerification = isAuth && p.std_dev !== null && p.std_dev > 0.5 && !p.icu_ack;
     let badge = '';
     if (needsVerification) {
         badge = `
@@ -1036,7 +1079,7 @@ function pointPopupContent(p) {
     const data  = JSON.stringify(p).replace(/"/g, '&quot;');
     const isAuth = document.body.dataset.auth === '1';
     let warningHtml = '';
-    if (isAuth && p.std_dev !== null && p.std_dev > 0.5) {
+    if (isAuth && p.std_dev !== null && p.std_dev > 0.5 && !p.icu_ack) {
         warningHtml = `
             <p style="font-size:10px; font-weight:600; color:#ef4444; margin:0 0 8px; display:flex; align-items:start; gap:4px; line-height:1.2;">
                 <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="flex-shrink:0; margin-top:1px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>

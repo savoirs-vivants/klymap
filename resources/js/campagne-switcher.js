@@ -38,17 +38,4 @@ document.addEventListener('DOMContentLoaded', () => {
             post(url).then((r) => r.ok && location.reload());
         });
     });
-
-    document.querySelectorAll('[data-participant-switch]').forEach((item) => {
-        item.addEventListener('click', () => {
-            post('/session/changer', { campagne_id: item.dataset.participantSwitch })
-                .then((r) => r.ok && location.reload());
-        });
-    });
-
-    document.querySelectorAll('[data-mode-libre-toggle]').forEach((item) => {
-        item.addEventListener('click', () => {
-            post('/session/mode-libre').then((r) => r.ok && location.reload());
-        });
-    });
 });

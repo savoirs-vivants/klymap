@@ -73,44 +73,14 @@ class ParticipantController extends Controller
             'nb_groupes'   => $campagne->nb_groupes,
         ];
 
-        $sessions = session('participant_sessions', []);
-        $sessions[$campagne->id] = $entry;
-
-        session([
-            'participant_sessions' => $sessions,
-            'participant'          => $entry + ['mode_libre' => false],
-        ]);
+        session(['participant' => $entry]);
 
         return response()->json(['redirect' => route('home')]);
     }
 
-    public function changer(\Illuminate\Http\Request $request)
-    {
-        $request->validate(['campagne_id' => 'required|integer']);
-
-        $sessions = session('participant_sessions', []);
-        $entry    = $sessions[$request->campagne_id] ?? null;
-
-        abort_unless($entry, 404);
-
-        session(['participant' => $entry + ['mode_libre' => false]]);
-
-        return response()->json(['ok' => true, 'nom' => $entry['campagne_nom']]);
-    }
-
-    public function toggleModeLibre()
-    {
-        abort_unless(session()->has('participant'), 404);
-
-        $modeLibre = ! session('participant.mode_libre', false);
-        session(['participant.mode_libre' => $modeLibre]);
-
-        return response()->json(['ok' => true, 'mode_libre' => $modeLibre]);
-    }
-
     public function logout()
     {
-        session()->forget(['participant', 'participant_sessions']);
+        session()->forget('participant');
         return redirect('/');
     }
 }

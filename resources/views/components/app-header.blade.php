@@ -142,54 +142,25 @@
             </div>
         @elseif(session()->has('participant'))
             {{-- Session participant --}}
-            @php $modeLibre = $activeParticipant['mode_libre'] ?? false; @endphp
             <div class="flex items-center gap-2">
-                <div class="relative" data-dropdown-wrapper>
-                    <button type="button" data-dropdown-toggle
-                        class="flex items-center gap-2 px-3 py-1.5 bg-teal-50 border border-teal-200 rounded-full text-sm text-teal-700 font-medium hover:bg-teal-100 transition-colors"
-                        aria-haspopup="true" aria-expanded="false">
-                        <div class="w-5 h-5 rounded-full bg-teal-500 flex items-center justify-center text-white text-[10px] font-bold shrink-0">
-                            {{ strtoupper(substr($activeParticipant['pseudo'], 0, 1)) }}
-                        </div>
-                        <span class="max-md:hidden">
-                            {{ $modeLibre ? 'Mode libre' : $activeParticipant['campagne_nom'] }}
-                        </span>
-                        @if(!$modeLibre && $activeParticipant['id_groupe'] > 0)
-                            <span class="max-md:hidden text-teal-500">· Groupe {{ chr(64 + $activeParticipant['id_groupe']) }}</span>
-                        @endif
-                        <svg class="w-3.5 h-3.5 shrink-0 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                    </button>
-                    <div data-dropdown-menu class="hidden absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-slate-100 py-1 z-50" role="menu">
-                        @if(count($participantSessions) > 1)
-                            <div class="px-4 py-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">Changer de campagne</div>
-                            @foreach($participantSessions as $ps)
-                                <button type="button" data-participant-switch="{{ $ps['id_session'] }}"
-                                    class="w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center justify-between {{ !$modeLibre && $activeParticipant['id_session'] === $ps['id_session'] ? 'text-teal-700 font-semibold bg-teal-50' : 'text-slate-700 hover:bg-slate-50' }}" role="menuitem">
-                                    <span class="truncate">{{ $ps['campagne_nom'] }}</span>
-                                    @if(!$modeLibre && $activeParticipant['id_session'] === $ps['id_session'])
-                                        <svg class="w-4 h-4 text-teal-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                    @endif
-                                </button>
-                            @endforeach
-                            <div class="border-t border-slate-100 my-1"></div>
-                        @endif
-                        <button type="button" data-mode-libre-toggle
-                            class="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-between" role="menuitem">
-                            Mode libre
-                            @if($modeLibre)
-                                <svg class="w-4 h-4 text-teal-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                            @endif
-                        </button>
-                        <div class="border-t border-slate-100 my-1"></div>
-                        <form method="POST" action="{{ route('participant.logout') }}">
-                            @csrf
-                            <button type="submit" class="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2" role="menuitem">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7"/></svg>
-                                Quitter la session
-                            </button>
-                        </form>
+                <div class="flex items-center gap-2 px-3 py-1.5 bg-teal-50 border border-teal-200 rounded-full text-sm text-teal-700 font-medium">
+                    <div class="w-5 h-5 rounded-full bg-teal-500 flex items-center justify-center text-white text-[10px] font-bold shrink-0">
+                        {{ strtoupper(substr($activeParticipant['pseudo'], 0, 1)) }}
                     </div>
+                    <span class="max-md:hidden">{{ $activeParticipant['campagne_nom'] }}</span>
+                    @if($activeParticipant['id_groupe'] > 0)
+                        <span class="max-md:hidden text-teal-500">· Groupe {{ chr(64 + $activeParticipant['id_groupe']) }}</span>
+                    @endif
                 </div>
+                <form method="POST" action="{{ route('participant.logout') }}">
+                    @csrf
+                    <button type="submit"
+                        class="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 text-sm font-medium rounded-full transition-colors"
+                        title="Quitter la session">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7"/></svg>
+                        <span class="max-md:hidden">Quitter</span>
+                    </button>
+                </form>
             </div>
         @else
             <a href="{{ route('login') }}" class="flex items-center gap-1.5 px-3 py-2 bg-teal-600 hover:bg-teal-500 text-white text-sm font-semibold rounded-lg transition-all shadow active:scale-95">
