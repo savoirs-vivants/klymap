@@ -87,6 +87,11 @@
                                         class="flex-1 sm:flex-none justify-center flex items-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-600 text-xs font-semibold transition-colors">
                                         Terminer
                                     </button>
+                                @else
+                                    <button onclick="reouvrirCampagne({{ $c->id }}, '{{ addslashes($c->nom) }}')"
+                                        class="flex-1 sm:flex-none justify-center flex items-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-600 text-xs font-semibold transition-colors">
+                                        Réouvrir
+                                    </button>
                                 @endif
 
                                 <button

@@ -37,8 +37,6 @@ Route::get('/code',               [ParticipantController::class, 'showJoin'])->n
 Route::post('/code/valider',      [ParticipantController::class, 'validateCode'])->name('participant.validateCode');
 Route::post('/session/rejoindre', [ParticipantController::class, 'register'])->name('participant.register');
 Route::post('/session/quitter',   [ParticipantController::class, 'logout'])->name('participant.logout');
-Route::post('/session/changer',     [ParticipantController::class, 'changer'])->name('participant.changer');
-Route::post('/session/mode-libre',  [ParticipantController::class, 'toggleModeLibre'])->name('participant.mode-libre');
 
 Route::prefix('api')->name('api.')->group(function () {
     Route::get('/capteur-temoins', [CapteurTemoinController::class, 'index'])->name('temoins.index');
@@ -70,6 +68,7 @@ Route::middleware('auth')->group(function () {
     Route::put('/campagnes/{campagne}',           [CampagneController::class, 'update'])->name('campagne.update');
     Route::get('/campagnes/{campagne}/participants', [CampagneController::class, 'participants'])->name('campagne.participants');
     Route::put('/campagnes/{campagne}/terminer', [CampagneController::class, 'terminer'])->name('campagnes.terminer');
+    Route::put('/campagnes/{campagne}/reouvrir', [CampagneController::class, 'reouvrir'])->name('campagnes.reouvrir');
     Route::delete('/campagnes/{campagne}',        [CampagneController::class, 'destroy'])->name('campagne.destroy');
     Route::post('/campagnes/{campagne}/activer', [CampagneController::class, 'activer'])->name('campagne.activer');
     Route::post('/campagnes/desactiver',         [CampagneController::class, 'desactiver'])->name('campagne.desactiver');
@@ -103,5 +102,6 @@ Route::middleware('auth.participant')->group(function () {
         Route::put('/capteur-points/{capteurPoint}', [CapteurPointController::class, 'update'])->name('points.update');
         Route::delete('/capteur-points/{capteurPoint}', [CapteurPointController::class, 'destroy'])->name('points.destroy');
         Route::post('/capteur-points/{capteurPoint}/image', [CapteurPointController::class, 'uploadImage'])->name('points.upload-image');
+        Route::post('/capteur-points/{capteurPoint}/ack-icu', [CapteurPointController::class, 'ackIcu'])->name('points.ack-icu');
     });
 });

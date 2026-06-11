@@ -77,6 +77,17 @@ class CampagneController extends Controller
         return response()->json(['ok' => true]);
     }
 
+    public function reouvrir(Campagne $campagne)
+    {
+        abort_unless($campagne->id_gestionnaire === Auth::id(), 403);
+
+        $campagne->update([
+            'date_fin' => null,
+        ]);
+
+        return response()->json(['ok' => true]);
+    }
+
     public function participants(Campagne $campagne)
     {
         abort_unless($campagne->id_gestionnaire === Auth::id(), 403);

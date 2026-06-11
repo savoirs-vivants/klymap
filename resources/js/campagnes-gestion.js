@@ -152,6 +152,31 @@ window.endCampagne = async function (id, nom) {
     }
 };
 
+window.reouvrirCampagne = async function (id, nom) {
+    if (
+        !confirm(
+            `Voulez-vous vraiment réouvrir la campagne "${nom}" ?\n\nLe code de cette campagne sera de nouveau actif.`,
+        )
+    )
+        return;
+
+    try {
+        const res = await fetch(`/campagnes/${id}/reouvrir`, {
+            method: "PUT",
+            headers: { Accept: "application/json", "X-CSRF-TOKEN": csrf },
+        });
+        const json = await res.json();
+
+        if (!res.ok) {
+            alert(json.message || "Erreur lors de la réouverture de la campagne.");
+            return;
+        }
+        location.reload();
+    } catch {
+        alert("Erreur réseau. Réessayez.");
+    }
+};
+
 window.deleteCampagne = async function (id, nom) {
     if (
         !confirm(
