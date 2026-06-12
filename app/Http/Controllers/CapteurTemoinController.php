@@ -37,7 +37,7 @@ class CapteurTemoinController extends Controller
         $temoins = $query->get()->map(fn ($t) => [
             'id'           => $t->id,
             'name'         => $t->name,
-            'image_url'     => $t->image ? asset('storage/' . $t->image) : null,
+            'images'        => $this->imagesResource($t->images),
             'date'          => $t->date?->format('Y-m-d'),
             'lat'           => (float) $t->lat,
             'lng'           => (float) $t->lng,
@@ -70,7 +70,7 @@ class CapteurTemoinController extends Controller
         return response()->json([
             'id'   => $temoin->id,
             'name' => $temoin->name,
-            'image_url' => $temoin->image ? asset('storage/' . $temoin->image) : null,
+            'images'    => $this->imagesResource($temoin->images),
             'date'      => $temoin->date?->format('Y-m-d'),
             'lat'  => (float) $temoin->lat,
             'lng'  => (float) $temoin->lng,
@@ -113,7 +113,7 @@ class CapteurTemoinController extends Controller
         return response()->json([
             'id'      => $capteurTemoin->id,
             'name'    => $capteurTemoin->name,
-            'image_url' => $capteurTemoin->image ? asset('storage/' . $capteurTemoin->image) : null,
+            'images'    => $this->imagesResource($capteurTemoin->images),
             'date'      => $capteurTemoin->date?->format('Y-m-d'),
             'mesures' => $mesures,
         ]);
@@ -151,16 +151,40 @@ class CapteurTemoinController extends Controller
     {
         $this->authorize($capteurTemoin);
 
-        $request->validate(['image' => ['required', 'image', 'max:4096']]);
+        $request->validate(['images' => ['required', 'array', 'min:1'], 'images.*' => ['image', 'max:4096']]);
 
-        if ($capteurTemoin->image) {
-            Storage::disk('public')->delete($capteurTemoin->image);
+        $images = $capteurTemoin->images ?? [];
+        foreach ($request->file('images') as $file) {
+            $images[] = $file->store('capteur-temoins', 'public');
         }
 
-        $path = $request->file('image')->store('capteur-temoins', 'public');
-        $capteurTemoin->update(['image' => $path]);
+        $capteurTemoin->update(['images' => $images]);
 
-        return response()->json(['image_url' => asset('storage/' . $path)]);
+        return response()->json(['images' => $this->imagesResource($images)]);
+    }
+
+    public function deleteImage(Request $request, CapteurTemoin $capteurTemoin)
+    {
+        $this->authorize($capteurTemoin);
+
+        $request->validate(['path' => ['required', 'string']]);
+
+        $images = $capteurTemoin->images ?? [];
+        if (in_array($request->path, $images, true)) {
+            Storage::disk('public')->delete($request->path);
+            $images = array_values(array_diff($images, [$request->path]));
+            $capteurTemoin->update(['images' => $images]);
+        }
+
+        return response()->json(['images' => $this->imagesResource($images)]);
+    }
+
+    private function imagesResource(?array $images): array
+    {
+        return array_map(fn ($path) => [
+            'path' => $path,
+            'url'  => asset('storage/' . $path),
+        ], $images ?? []);
     }
 
     #[OA\Get(

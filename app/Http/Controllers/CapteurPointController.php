@@ -173,16 +173,40 @@ class CapteurPointController extends Controller
     {
         $this->authorize($capteurPoint);
 
-        $request->validate(['image' => ['required', 'image', 'max:4096']]);
+        $request->validate(['images' => ['required', 'array', 'min:1'], 'images.*' => ['image', 'max:4096']]);
 
-        if ($capteurPoint->image) {
-            Storage::disk('public')->delete($capteurPoint->image);
+        $images = $capteurPoint->images ?? [];
+        foreach ($request->file('images') as $file) {
+            $images[] = $file->store('capteur-points', 'public');
         }
 
-        $path = $request->file('image')->store('capteur-points', 'public');
-        $capteurPoint->update(['image' => $path]);
+        $capteurPoint->update(['images' => $images]);
 
-        return response()->json(['image_url' => asset('storage/' . $path)]);
+        return response()->json(['images' => $this->imagesResource($images)]);
+    }
+
+    public function deleteImage(Request $request, CapteurPoint $capteurPoint)
+    {
+        $this->authorize($capteurPoint);
+
+        $request->validate(['path' => ['required', 'string']]);
+
+        $images = $capteurPoint->images ?? [];
+        if (in_array($request->path, $images, true)) {
+            Storage::disk('public')->delete($request->path);
+            $images = array_values(array_diff($images, [$request->path]));
+            $capteurPoint->update(['images' => $images]);
+        }
+
+        return response()->json(['images' => $this->imagesResource($images)]);
+    }
+
+    private function imagesResource(?array $images): array
+    {
+        return array_map(fn ($path) => [
+            'path' => $path,
+            'url'  => asset('storage/' . $path),
+        ], $images ?? []);
     }
 
     private function pointResource(CapteurPoint $p): array
@@ -192,7 +216,7 @@ class CapteurPointController extends Controller
             'user_id'        => $p->user_id,
             'name'           => $p->name,
             'date'           => $p->date?->format('Y-m-d'),
-            'image_url'      => $p->image ? asset('storage/' . $p->image) : null,
+            'images'         => $this->imagesResource($p->images),
             'night_overrides' => $p->night_overrides ?? [],
             'lat'            => (float) $p->lat,
             'lng'            => (float) $p->lng,

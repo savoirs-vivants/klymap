@@ -138,18 +138,16 @@
                         </div>
 
                         <div id="temoin-image-section">
-                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Photo
+                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Photos
                                 du capteur</label>
-                            <div class="flex items-start gap-3">
-                                <img id="temoin-image-preview" src="" alt="Photo capteur témoin"
-                                    class="hidden w-24 h-24 object-cover rounded-xl border border-slate-200 shrink-0">
+                            <div id="temoin-images-gallery" class="flex flex-wrap items-start gap-3">
                                 <label for="temoin-image-input"
-                                    class="flex flex-col items-center justify-center gap-1.5 px-4 py-4 border-2 border-dashed border-slate-200 rounded-xl cursor-pointer bg-slate-50 hover:border-teal-400 hover:bg-teal-50/50 transition-all group flex-1">
+                                    class="flex flex-col items-center justify-center gap-1.5 w-24 h-24 border-2 border-dashed border-slate-200 rounded-xl cursor-pointer bg-slate-50 hover:border-teal-400 hover:bg-teal-50/50 transition-all group shrink-0">
                                     <svg class="w-6 h-6 text-slate-300 group-hover:text-teal-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                                     </svg>
-                                    <span id="temoin-image-cta" class="text-xs font-medium text-slate-400 group-hover:text-teal-600 transition-colors">Ajouter une photo</span>
-                                    <input id="temoin-image-input" type="file" accept="image/*" class="sr-only">
+                                    <span id="temoin-image-cta" class="text-[10px] font-medium text-slate-400 group-hover:text-teal-600 transition-colors text-center px-1">Ajouter des photos</span>
+                                    <input id="temoin-image-input" type="file" accept="image/*" multiple class="sr-only">
                                 </label>
                             </div>
                         </div>
@@ -256,9 +254,9 @@
             {{-- Header --}}
             <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0">
                 <div class="flex items-center gap-4 min-w-0">
-                    {{-- Miniature image (visible uniquement si une image est associée au point) --}}
+                    {{-- Miniature image (visible uniquement si au moins une image est associée au point) --}}
                     <img id="modal-point-image-thumb" src="" alt="Photo"
-                        class="hidden w-14 h-14 object-cover rounded-xl border border-slate-200 shrink-0">
+                        class="hidden w-14 h-14 object-cover rounded-xl border border-slate-200 shrink-0 cursor-zoom-in">
                     <div class="min-w-0">
                         <h2 id="modal-point-title" class="text-xl font-bold text-slate-900">Nouveau point de mesure</h2>
                         <p class="text-xs text-slate-400 mt-0.5">Remplissez les informations, importez vos données et
@@ -299,17 +297,15 @@
                     {{-- Image de l'emplacement (affiché uniquement en mode édition/lecture) --}}
                     @if (auth()->check() || session()->has('participant'))
                     <div id="point-image-section" class="mt-4">
-                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">Photo de l'emplacement</label>
-                        <div class="flex items-start gap-3">
-                            <img id="point-image-preview" src="" alt="Photo emplacement"
-                                class="hidden w-24 h-24 object-cover rounded-xl border border-slate-200 shrink-0">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5">Photos de l'emplacement</label>
+                        <div id="point-images-gallery" class="flex flex-wrap items-start gap-3">
                             <label for="point-image-input"
-                                class="flex flex-col items-center justify-center gap-1.5 px-4 py-4 border-2 border-dashed border-slate-200 rounded-xl cursor-pointer bg-slate-50 hover:border-blue-400 hover:bg-blue-50/40 transition-all group flex-1">
+                                class="flex flex-col items-center justify-center gap-1.5 w-24 h-24 border-2 border-dashed border-slate-200 rounded-xl cursor-pointer bg-slate-50 hover:border-blue-400 hover:bg-blue-50/40 transition-all group shrink-0">
                                 <svg class="w-6 h-6 text-slate-300 group-hover:text-blue-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                                 </svg>
-                                <span id="point-image-cta" class="text-xs font-medium text-slate-400 group-hover:text-blue-500 transition-colors">Ajouter une photo</span>
-                                <input id="point-image-input" type="file" accept="image/*" class="sr-only">
+                                <span id="point-image-cta" class="text-[10px] font-medium text-slate-400 group-hover:text-blue-500 transition-colors text-center px-1">Ajouter des photos</span>
+                                <input id="point-image-input" type="file" accept="image/*" multiple class="sr-only">
                             </label>
                         </div>
                     </div>

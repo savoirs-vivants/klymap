@@ -5,6 +5,7 @@ let pendingLatLng  = null;
 let temoinsMarkers = {};
 let editingTemoin  = null;
 let parsedMesures  = [];
+let pendingTemoinFiles = [];
 
 /* ══════════════════════════════════
    Aside — menu capteurs
@@ -63,6 +64,62 @@ window.cancelPlacementMode = function () {
    Overlay témoin
 ══════════════════════════════════ */
 
+/* ══════════════════════════════════
+   Galerie d'images — capteur témoin
+══════════════════════════════════ */
+
+function renderTemoinGallery(images) {
+    const gallery = document.getElementById('temoin-images-gallery');
+    if (!gallery) return;
+
+    gallery.querySelectorAll('.temoin-image-thumb').forEach((el) => el.remove());
+
+    (images ?? []).forEach((img) => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'temoin-image-thumb relative w-24 h-24 shrink-0';
+
+        const thumb = document.createElement('img');
+        thumb.src = img.url;
+        thumb.alt = 'Photo capteur témoin';
+        thumb.className = 'w-24 h-24 object-cover rounded-xl border border-slate-200 cursor-zoom-in';
+        thumb.onclick = () => openLightbox(img.url);
+        wrapper.appendChild(thumb);
+
+        if (editingTemoin) {
+            const delBtn = document.createElement('button');
+            delBtn.type = 'button';
+            delBtn.className = 'absolute -top-2 -right-2 w-6 h-6 flex items-center justify-center bg-red-500 hover:bg-red-600 text-white rounded-full shadow text-xs font-bold transition-colors';
+            delBtn.innerHTML = '&times;';
+            delBtn.onclick = async (e) => {
+                e.preventDefault();
+                if (!confirm('Supprimer cette photo ?')) return;
+                try {
+                    const r = await fetch(`/api/capteur-temoins/${editingTemoin.id}/image`, {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
+                        body: JSON.stringify({ path: img.path }),
+                    });
+                    if (!r.ok) throw new Error();
+                    const data = await r.json();
+                    editingTemoin.images = data.images;
+                    renderTemoinGallery(data.images);
+                } catch { alert('Erreur lors de la suppression de la photo.'); }
+            };
+            wrapper.appendChild(delBtn);
+        }
+
+        gallery.insertBefore(wrapper, gallery.firstChild);
+    });
+}
+
+function openLightbox(src) {
+    const lb  = document.getElementById('img-lightbox');
+    const img = document.getElementById('img-lightbox-src');
+    if (!lb || !img || !src) return;
+    img.src = src;
+    lb.classList.remove('hidden');
+}
+
 window.openTemoinOverlay = function (temoin = null) {
     editingTemoin = temoin;
     parsedMesures = [];
@@ -80,37 +137,29 @@ window.openTemoinOverlay = function (temoin = null) {
     if (dateInput) dateInput.value = temoin?.date ?? '';
     dateSection?.classList.toggle('hidden', !temoin?.date);
 
-    // Photo du capteur
-    const imgPreview = document.getElementById('temoin-image-preview');
-    const imgCta     = document.getElementById('temoin-image-cta');
-    const imgInput   = document.getElementById('temoin-image-input');
+    // Photos du capteur
+    const imgInput = document.getElementById('temoin-image-input');
     if (imgInput) imgInput.value = '';
-    if (temoin?.image_url) {
-        if (imgPreview) { imgPreview.src = temoin.image_url; imgPreview.classList.remove('hidden'); }
-        if (imgCta) imgCta.textContent = 'Changer la photo';
-    } else {
-        if (imgPreview) { imgPreview.src = ''; imgPreview.classList.add('hidden'); }
-        if (imgCta) imgCta.textContent = 'Ajouter une photo';
-    }
+    pendingTemoinFiles = [];
+    renderTemoinGallery(temoin?.images);
 
     if (imgInput && !imgInput._listenerAdded) {
         imgInput._listenerAdded = true;
         imgInput.addEventListener('change', async () => {
-            const file = imgInput.files[0];
-            if (!file) return;
+            const files = Array.from(imgInput.files ?? []);
+            if (!files.length) return;
 
-            const prev = document.getElementById('temoin-image-preview');
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                if (prev) { prev.src = e.target.result; prev.classList.remove('hidden'); }
-                const cta = document.getElementById('temoin-image-cta');
-                if (cta) cta.textContent = 'Changer la photo';
-            };
-            reader.readAsDataURL(file);
+            if (!editingTemoin) {
+                // Pas encore créé : accumuler les fichiers et prévisualiser tout, upload différé après la création
+                pendingTemoinFiles = pendingTemoinFiles.concat(files);
+                imgInput.value = '';
+                const previews = pendingTemoinFiles.map((f) => ({ url: URL.createObjectURL(f), path: null }));
+                renderTemoinGallery(previews);
+                return;
+            }
 
-            if (!editingTemoin) return;
             const fd = new FormData();
-            fd.append('image', file);
+            files.forEach((f) => fd.append('images[]', f));
             try {
                 const r = await fetch(`/api/capteur-temoins/${editingTemoin.id}/image`, {
                     method: 'POST',
@@ -118,10 +167,11 @@ window.openTemoinOverlay = function (temoin = null) {
                     body: fd,
                 });
                 if (!r.ok) throw new Error();
-                const { image_url } = await r.json();
-                if (prev) prev.src = image_url;
-                editingTemoin.image_url = image_url;
-            } catch { alert("Erreur lors de l'upload de l'image."); }
+                const { images } = await r.json();
+                editingTemoin.images = images;
+                renderTemoinGallery(images);
+                imgInput.value = '';
+            } catch { alert("Erreur lors de l'upload des images."); }
         });
     }
 
@@ -155,6 +205,7 @@ window.closeTemoinOverlay = function () {
     overlay?.classList.remove('flex');
     editingTemoin = null;
     parsedMesures = [];
+    pendingTemoinFiles = [];
     pendingLatLng = null;
 };
 
@@ -343,11 +394,10 @@ async function saveTemoin() {
         const data = await res.json();
 
         if (!isEdit) {
-            // Upload de l'image si une a été sélectionnée (le témoin vient d'être créé → on a maintenant son id)
-            const imageInput = document.getElementById('temoin-image-input');
-            if (imageInput?.files[0]) {
+            // Upload des images si certaines ont été sélectionnées (le témoin vient d'être créé → on a maintenant son id)
+            if (pendingTemoinFiles.length) {
                 const fd = new FormData();
-                fd.append('image', imageInput.files[0]);
+                pendingTemoinFiles.forEach((f) => fd.append('images[]', f));
                 try {
                     const imgRes = await fetch(`/api/capteur-temoins/${data.id}/image`, {
                         method: 'POST',
@@ -356,7 +406,7 @@ async function saveTemoin() {
                     });
                     if (imgRes.ok) {
                         const imgData = await imgRes.json();
-                        data.image_url = imgData.image_url;
+                        data.images = imgData.images;
                     }
                 } catch { /* non-bloquant */ }
             }

@@ -13,6 +13,65 @@ document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') document.getElementById('img-lightbox')?.classList.add('hidden');
 });
 
+function updatePointThumb(images) {
+    const imgThumb = document.getElementById('modal-point-image-thumb');
+    if (!imgThumb) return;
+    const first = (images ?? [])[0];
+    if (first) {
+        imgThumb.src = first.url;
+        imgThumb.classList.remove('hidden');
+        imgThumb.onclick = () => openLightbox(first.url);
+    } else {
+        imgThumb.src = '';
+        imgThumb.classList.add('hidden');
+    }
+}
+
+function renderPointGallery(images) {
+    const gallery = document.getElementById('point-images-gallery');
+    if (!gallery) return;
+
+    gallery.querySelectorAll('.point-image-thumb').forEach((el) => el.remove());
+
+    (images ?? []).forEach((img) => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'point-image-thumb relative w-24 h-24 shrink-0';
+
+        const thumb = document.createElement('img');
+        thumb.src = img.url;
+        thumb.alt = 'Photo emplacement';
+        thumb.className = 'w-24 h-24 object-cover rounded-xl border border-slate-200 cursor-zoom-in';
+        thumb.onclick = () => openLightbox(img.url);
+        wrapper.appendChild(thumb);
+
+        if (editingPoint) {
+            const delBtn = document.createElement('button');
+            delBtn.type = 'button';
+            delBtn.className = 'absolute -top-2 -right-2 w-6 h-6 flex items-center justify-center bg-red-500 hover:bg-red-600 text-white rounded-full shadow text-xs font-bold transition-colors';
+            delBtn.innerHTML = '&times;';
+            delBtn.onclick = async (e) => {
+                e.preventDefault();
+                if (!confirm('Supprimer cette photo ?')) return;
+                try {
+                    const r = await fetch(`/api/capteur-points/${editingPoint.id}/image`, {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
+                        body: JSON.stringify({ path: img.path }),
+                    });
+                    if (!r.ok) throw new Error();
+                    const data = await r.json();
+                    editingPoint.images = data.images;
+                    renderPointGallery(data.images);
+                    updatePointThumb(data.images);
+                } catch { alert('Erreur lors de la suppression de la photo.'); }
+            };
+            wrapper.appendChild(delBtn);
+        }
+
+        gallery.insertBefore(wrapper, gallery.firstChild);
+    });
+}
+
 function isOwner(point) {
     const userId      = parseInt(document.body.dataset.userId || '0');
     const pJson       = document.body.dataset.participantJson;
@@ -30,6 +89,7 @@ let pointMesures    = [];
 let temoinMesures   = [];
 let excludedIdx     = new Set();
 let icuResult       = null;
+let pendingPointFiles = [];
 let chartTemp       = null;
 let chartIcu        = null;
 let pointsOnMap     = {};
@@ -100,44 +160,10 @@ window.openPointModal = function (point = null) {
     const nameInput = document.getElementById('point-name');
     if (nameInput) nameInput.value = point?.name ?? '';
 
-    // Image preview (zone upload + miniature dans l'en-tête)
-    const imgPreview = document.getElementById('point-image-preview');
-    const imgThumb   = document.getElementById('modal-point-image-thumb');
-    const imgCta     = document.getElementById('point-image-cta');
-    if (point?.image_url) {
-        if (imgPreview) { imgPreview.src = point.image_url; imgPreview.classList.remove('hidden'); }
-        if (imgThumb)   { imgThumb.src   = point.image_url; imgThumb.classList.remove('hidden'); }
-        if (imgCta) imgCta.textContent = 'Changer la photo';
-    } else {
-        if (imgPreview) { imgPreview.src = ''; imgPreview.classList.add('hidden'); }
-        if (imgThumb)   { imgThumb.src   = ''; imgThumb.classList.add('hidden'); }
-        if (imgCta) imgCta.textContent = 'Ajouter une photo';
-    }
-
-    // Rendre les images cliquables → lightbox
-    [imgPreview, imgThumb].forEach((el) => {
-        if (!el) return;
-        el.style.cursor = 'zoom-in';
-        el.onclick = () => openLightbox(el.src);
-    });
-
-    // Synchroniser le thumb header quand l'utilisateur choisit une nouvelle image
-    const imgInput = document.getElementById('point-image-input');
-    if (imgInput) {
-        imgInput.addEventListener('change', () => {
-            const file = imgInput.files[0];
-            if (!file) return;
-            const r = new FileReader();
-            r.onload = (e) => {
-                if (imgThumb) {
-                    imgThumb.src = e.target.result;
-                    imgThumb.classList.remove('hidden');
-                    imgThumb.onclick = () => openLightbox(imgThumb.src);
-                }
-            };
-            r.readAsDataURL(file);
-        }, { once: true });
-    }
+    // Galerie de photos (zone upload + miniature dans l'en-tête)
+    pendingPointFiles = [];
+    renderPointGallery(point?.images);
+    updatePointThumb(point?.images);
 
     const fileInput = document.getElementById('point-file-input');
     if (fileInput) fileInput.value = '';
@@ -186,23 +212,21 @@ window.openPointModal = function (point = null) {
         if (imageInput && !imageInput._listenerAdded) {
             imageInput._listenerAdded = true;
             imageInput.addEventListener('change', async () => {
-                const file = imageInput.files[0];
-                if (!file) return;
-
-                // Prévisualisation locale immédiate (fonctionne aussi pour un nouveau point)
-                const prev = document.getElementById('point-image-preview');
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    if (prev) { prev.src = e.target.result; prev.classList.remove('hidden'); }
-                    const cta = document.getElementById('point-image-cta');
-                    if (cta) cta.textContent = 'Changer la photo';
-                };
-                reader.readAsDataURL(file);
+                const files = Array.from(imageInput.files ?? []);
+                if (!files.length) return;
 
                 // Upload serveur uniquement si le point existe déjà en BDD
-                if (!editingPoint) return;
+                if (!editingPoint) {
+                    pendingPointFiles = pendingPointFiles.concat(files);
+                    imageInput.value = '';
+                    const previews = pendingPointFiles.map((f) => ({ url: URL.createObjectURL(f), path: null }));
+                    renderPointGallery(previews);
+                    updatePointThumb(previews);
+                    return;
+                }
+
                 const fd = new FormData();
-                fd.append('image', file);
+                files.forEach((f) => fd.append('images[]', f));
                 try {
                     const r = await fetch(`/api/capteur-points/${editingPoint.id}/image`, {
                         method: 'POST',
@@ -210,9 +234,12 @@ window.openPointModal = function (point = null) {
                         body: fd,
                     });
                     if (!r.ok) throw new Error();
-                    const { image_url } = await r.json();
-                    if (prev) prev.src = image_url;
-                } catch { alert("Erreur lors de l'upload de l'image."); }
+                    const { images } = await r.json();
+                    editingPoint.images = images;
+                    renderPointGallery(images);
+                    updatePointThumb(images);
+                    imageInput.value = '';
+                } catch { alert("Erreur lors de l'upload des images."); }
             });
         }
     }
@@ -235,6 +262,7 @@ window.closePointModal = function () {
     if (chartIcu)  { chartIcu.destroy();  chartIcu  = null; }
     editingPoint = null;
     pointMesures = [];
+    pendingPointFiles = [];
 };
 
 /* ══════════════════ Load témoins into dropdown ══════════════════ */
@@ -990,11 +1018,10 @@ async function savePoint() {
         const data = await res.json();
 
         if (!isEdit) {
-            // Upload de l'image si une a été sélectionnée (le point vient d'être créé → on a maintenant son id)
-            const imageInput = document.getElementById('point-image-input');
-            if (imageInput?.files[0]) {
+            // Upload des images si certaines ont été sélectionnées (le point vient d'être créé → on a maintenant son id)
+            if (pendingPointFiles.length) {
                 const fd = new FormData();
-                fd.append('image', imageInput.files[0]);
+                pendingPointFiles.forEach((f) => fd.append('images[]', f));
                 try {
                     const imgRes = await fetch(`/api/capteur-points/${data.id}/image`, {
                         method: 'POST',
@@ -1003,7 +1030,7 @@ async function savePoint() {
                     });
                     if (imgRes.ok) {
                         const imgData = await imgRes.json();
-                        data.image_url = imgData.image_url;
+                        data.images = imgData.images;
                     }
                 } catch { /* non-bloquant */ }
             }

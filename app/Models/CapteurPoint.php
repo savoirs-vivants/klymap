@@ -8,10 +8,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class CapteurPoint extends Model
 {
-    protected $fillable = ['user_id', 'capteur_temoin_id', 'name', 'image', 'date', 'lat', 'lng', 'icu_value', 'std_dev', 'icu_ack', 'night_overrides', 'session_id', 'participant_id'];
+    protected $fillable = ['user_id', 'capteur_temoin_id', 'name', 'images', 'date', 'lat', 'lng', 'icu_value', 'std_dev', 'icu_ack', 'night_overrides', 'session_id', 'participant_id'];
 
     protected $casts = [
         'date'            => 'date',
+        'images'          => 'array',
         'night_overrides' => 'array',
         'icu_ack'         => 'boolean',
     ];

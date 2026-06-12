@@ -60,6 +60,7 @@ Route::middleware('auth')->group(function () {
         Route::put('/capteur-temoins/{capteurTemoin}', [CapteurTemoinController::class, 'update'])->name('temoins.update');
         Route::delete('/capteur-temoins/{capteurTemoin}', [CapteurTemoinController::class, 'destroy'])->name('temoins.destroy');
         Route::post('/capteur-temoins/{capteurTemoin}/image', [CapteurTemoinController::class, 'uploadImage'])->name('temoins.upload-image');
+        Route::delete('/capteur-temoins/{capteurTemoin}/image', [CapteurTemoinController::class, 'deleteImage'])->name('temoins.delete-image');
 
     });
 
@@ -102,6 +103,7 @@ Route::middleware('auth.participant')->group(function () {
         Route::put('/capteur-points/{capteurPoint}', [CapteurPointController::class, 'update'])->name('points.update');
         Route::delete('/capteur-points/{capteurPoint}', [CapteurPointController::class, 'destroy'])->name('points.destroy');
         Route::post('/capteur-points/{capteurPoint}/image', [CapteurPointController::class, 'uploadImage'])->name('points.upload-image');
+        Route::delete('/capteur-points/{capteurPoint}/image', [CapteurPointController::class, 'deleteImage'])->name('points.delete-image');
         Route::post('/capteur-points/{capteurPoint}/ack-icu', [CapteurPointController::class, 'ackIcu'])->name('points.ack-icu');
     });
 });
