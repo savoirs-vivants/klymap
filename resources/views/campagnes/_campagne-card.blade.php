@@ -67,8 +67,8 @@
                                         <p class="text-xs font-semibold text-slate-800 truncate group-hover:text-teal-700">{{ $point->name }}</p>
                                         <p class="text-[10px] text-slate-400">
                                             @if($point->icu_value !== null)
-                                                ICU : <span class="font-bold" style="color:{{ $color }}">{{ $point->icu_value }} °C</span>
-                                                @if($point->std_dev !== null) ± {{ $point->std_dev }} °C @endif
+                                                ICU : <span class="font-bold" style="color:{{ $color }}">{{ number_format($point->icu_value, 1) }} °C</span>
+                                                @if($point->std_dev !== null) ± {{ number_format($point->std_dev, 2) }} °C @endif
                                             @else
                                                 ICU non calculé
                                             @endif
@@ -112,8 +112,8 @@
                             <p class="text-xs font-semibold text-slate-800 truncate group-hover:text-teal-700">{{ $point->name }}</p>
                             <p class="text-[10px] text-slate-400">
                                 @if($point->icu_value !== null)
-                                    ICU : <span class="font-bold" style="color:{{ $color }}">{{ $point->icu_value }} °C</span>
-                                    @if($point->std_dev !== null) ± {{ $point->std_dev }} °C @endif
+                                    ICU : <span class="font-bold" style="color:{{ $color }}">{{ number_format($point->icu_value, 1) }} °C</span>
+                                    @if($point->std_dev !== null) ± {{ number_format($point->std_dev, 2) }} °C @endif
                                 @else
                                     ICU non calculé
                                 @endif
