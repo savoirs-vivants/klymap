@@ -51,13 +51,6 @@
                     <h2 class="text-base font-bold text-[#222a60] leading-tight mb-0.5 truncate" title="{{ $nomCapteur }}">
                         {{ $nomCapteur }}
                     </h2>
-                    <p class="font-mono text-[10px] text-slate-400">
-                        @if ($capteur->lat !== null && $capteur->long !== null)
-                            {{ number_format($capteur->lat, 5) }}, {{ number_format($capteur->long, 5) }}
-                        @else
-                            Position non renseignée
-                        @endif
-                    </p>
                     <div class="mt-2">
                         @if ($derniere)
                             <span class="inline-flex items-center gap-1 text-[10px] text-slate-400">
