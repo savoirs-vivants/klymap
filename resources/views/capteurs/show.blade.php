@@ -1,7 +1,7 @@
 <x-layouts.app title="Capteur">
 
 @php
-    $titreCapteur = $capteur->UID ?? ('Station #' . $capteur->id);
+    $titreCapteur = $capteur->UID ?? $capteur->DevEui ?? ('Station #' . $capteur->id);
     $kpis = [
         ['key' => 'temp',               'label' => 'Température',        'unit' => '°C',    'color' => 'text-orange-500',  'bg' => 'bg-orange-50',  'border' => 'border-orange-100'],
         ['key' => 'hum',                'label' => 'Humidité',           'unit' => '%',     'color' => 'text-blue-500',    'bg' => 'bg-blue-50',    'border' => 'border-blue-100'],
@@ -29,20 +29,23 @@
          data-export-url="{{ route('capteurs.export', $capteur->id) }}">
     </div>
 
+    @php $kpisDisponibles = $derniere ? array_values(array_filter($kpis, fn ($k) => $derniere->{$k['key']} !== null)) : []; @endphp
+    @if (!empty($kpisDisponibles))
     <div class="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-        @foreach ($kpis as $k)
-        @php $val = $derniere?->{$k['key']}; @endphp
+        @foreach ($kpisDisponibles as $k)
+        @php $val = $derniere->{$k['key']}; @endphp
         <div class="bg-white rounded-2xl border border-slate-100 shadow-[0_2px_12px_rgba(34,42,96,0.06)] p-4">
             <p class="text-[9px] font-mono font-bold uppercase tracking-widest text-slate-400 mb-2">{{ $k['label'] }}</p>
-            <p class="text-2xl font-bold {{ $val !== null ? $k['color'] : 'text-slate-300' }}">
-                {{ $val !== null ? $val : '—' }}
+            <p class="text-2xl font-bold {{ $k['color'] }}">
+                {{ $val }}
             </p>
-            @if ($val !== null && $k['unit'] !== '')
+            @if ($k['unit'] !== '')
                 <p class="text-[10px] text-slate-400 mt-0.5">{{ $k['unit'] }}</p>
             @endif
         </div>
         @endforeach
     </div>
+    @endif
 
     <div class="bg-white rounded-2xl border border-slate-100 shadow-[0_2px_12px_rgba(34,42,96,0.06)] p-4 sm:p-5 mb-6">
         <div class="flex flex-wrap items-start justify-between gap-4">
@@ -74,8 +77,8 @@
             </div>
 
             <button id="btn-export-excel" title="Exporter les données filtrées en Excel"
-                class="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg border border-emerald-200 text-xs font-bold transition-colors">
-                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                class="flex items-center gap-2 px-5 py-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl border border-emerald-200 text-sm font-bold transition-colors">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                 Excel
             </button>
         </div>

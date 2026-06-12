@@ -47,8 +47,9 @@
                         <span class="font-mono text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded-lg border border-slate-100 shrink-0">#{{ $capteur->id }}</span>
                     </div>
 
-                    <h2 class="text-base font-bold text-[#222a60] leading-tight mb-0.5 truncate" title="{{ $capteur->UID ?? 'Station #' . $capteur->id }}">
-                        {{ $capteur->UID ?? 'Station #' . $capteur->id }}
+                    @php $nomCapteur = $capteur->UID ?? $capteur->DevEui ?? ('Station #' . $capteur->id); @endphp
+                    <h2 class="text-base font-bold text-[#222a60] leading-tight mb-0.5 truncate" title="{{ $nomCapteur }}">
+                        {{ $nomCapteur }}
                     </h2>
                     <p class="font-mono text-[10px] text-slate-400">
                         @if ($capteur->lat !== null && $capteur->long !== null)
@@ -73,20 +74,23 @@
                 </div>
 
                 {{-- Grille des paramètres --}}
+                @php $paramsDisponibles = $derniere ? array_values(array_filter($params, fn ($p) => $derniere->{$p['key']} !== null)) : []; @endphp
+                @if (!empty($paramsDisponibles))
                 <div class="grid grid-cols-2 gap-px bg-slate-100 border-t border-b border-slate-100 flex-1">
-                    @foreach ($params as $p)
-                    @php $val = $derniere?->{$p['key']}; @endphp
-                    <div class="bg-white px-4 py-3 {{ $loop->last && count($params) % 2 !== 0 ? 'col-span-2' : '' }}">
+                    @foreach ($paramsDisponibles as $p)
+                    @php $val = $derniere->{$p['key']}; @endphp
+                    <div class="bg-white px-4 py-3 {{ $loop->last && count($paramsDisponibles) % 2 !== 0 ? 'col-span-2' : '' }}">
                         <p class="text-[9px] font-mono font-bold uppercase tracking-widest text-slate-400 mb-1">{{ $p['label'] }}</p>
-                        <p class="text-sm font-bold {{ $val !== null ? $p['color'] : 'text-slate-300' }}">
-                            {{ $val !== null ? $val : '—' }}
-                            @if ($val !== null && $p['unit'] !== '')
+                        <p class="text-sm font-bold {{ $p['color'] }}">
+                            {{ $val }}
+                            @if ($p['unit'] !== '')
                                 <span class="text-[10px] font-normal text-slate-400">{{ $p['unit'] }}</span>
                             @endif
                         </p>
                     </div>
                     @endforeach
                 </div>
+                @endif
 
                 {{-- Footer --}}
                 <a href="{{ route('capteurs.show', $capteur->id) }}"
