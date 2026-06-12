@@ -100,10 +100,12 @@
         @endauth
 
         {{-- J'ai un code --}}
+        @guest
         <a href="/code" class="flex items-center gap-1.5 px-3 py-2 rounded-full border border-slate-200 text-slate-600 text-sm font-medium hover:border-slate-300 hover:bg-slate-50 transition-all">
             <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
             <span class="max-md:hidden">J'ai un code</span>
         </a>
+        @endguest
 
         @auth
             <div class="relative" id="user-menu-wrapper">
